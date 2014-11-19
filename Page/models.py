@@ -29,11 +29,17 @@ class PageManager(models.Manager):
         return pg
 
     def get_previous_following(self, yrb, facs_no):
+        '''Returns facs_no of previous and following page. Returns current facs_no if there is no previous or following page in yearbook.'''
         page = self._get_page(facs_no, yrb)
         page_id = page.id
         yearbook_id = page.yearbook.id
-        return self._get_previous(page_id, yearbook_id), self._get_following(page_id, yearbook_id)
+        return self._get_previous(page_id, yearbook_id, facs_no), self._get_following(page_id, yearbook_id, facs_no)
 
+    def get_first_last(self, yrb):
+        '''Returns facs_no of first and last page in yearbook'''
+        yearb = Yearbook.objects.all().get(file_name=yrb)
+        pages = list(Page.objects.all().filter(yearbook=yearb))
+        return pages[0].pb_n, pages[-1].pb_n
 
     def div_list(self, yrb, facs_no):
         '''Returns a list of div elements containing (token, attribute) tuples for a given page.'''
@@ -62,24 +68,25 @@ class PageManager(models.Manager):
             divs.append(tkns)
         return divs
 
-    def _get_previous(self, page_id, yearbook_id):
+    def _get_previous(self, page_id, yrb_id, facs_no):
         previous = page_id - 1
         try:
             previous_page = Page.objects.get(id=previous)
         except exceptions.ObjectDoesNotExist:
-            return page_id
-        if previous_page.yearbook_id != yearbook_id:
-            return page_id
+            return facs_no
+        if previous_page.yearbook_id != yrb_id:
+            return facs_no
         return previous_page.pb_n
 
-    def _get_following(selfs, page_id, yearbook_id):
+    def _get_following(selfs, page_id, yrb_id, facs_no):
         following = page_id + 1
         try:
             following_page = Page.objects.get(id=following)
         except exceptions.ObjectDoesNotExist:
-            return page_id
-        if following_page.yearbook_id != yearbook_id:
-            return page_id
+            return facs_no
+        if following_page.yearbook_id != yrb_id:
+            print (facs_no)
+            return facs_no
         return following_page.pb_n
 
 

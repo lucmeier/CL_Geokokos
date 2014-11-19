@@ -320,10 +320,10 @@ def import_swisstopo_data(file_name):
     swisstopo_cursor.close()
 
 
-#import_corpus('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de.xml')
+#import_corpus('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1968_de.xml')
 
-import_swisstopo_data('/Users/lukasmeier/Programming/Facharbeit/facharbeit/ch/uzh/cl/kokos/swisstopo/geolocations.sql')
+#import_swisstopo_data('/Users/lukasmeier/Programming/Facharbeit/facharbeit/ch/uzh/cl/kokos/swisstopo/geolocations.sql')
 
-import_geonames('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de-ner.xml', 'SAC-Jahrbuch_1969_de.xml')
+import_geonames('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1968_de-ner.xml', 'SAC-Jahrbuch_1968_de.xml')
 
 
