@@ -24,6 +24,7 @@ class Page(models.Model):
 
 class PageManager(models.Manager):
     def _get_page(self, facs_no, yrb):
+        '''Return page given facs_no and yearbook file_name.'''
         yrb = Yearbook.objects.all().filter(file_name=yrb)
         pg = Page.objects.get(yearbook=yrb, pb_n=int(facs_no))
         return pg
@@ -69,6 +70,7 @@ class PageManager(models.Manager):
         return divs
 
     def _get_previous(self, page_id, yrb_id, facs_no):
+        '''Returns facs_no of preceeding page .'''
         previous = page_id - 1
         try:
             previous_page = Page.objects.get(id=previous)
@@ -79,13 +81,13 @@ class PageManager(models.Manager):
         return previous_page.pb_n
 
     def _get_following(selfs, page_id, yrb_id, facs_no):
+        '''Returns facs no of following page'''
         following = page_id + 1
         try:
             following_page = Page.objects.get(id=following)
         except exceptions.ObjectDoesNotExist:
             return facs_no
         if following_page.yearbook_id != yrb_id:
-            print (facs_no)
             return facs_no
         return following_page.pb_n
 
