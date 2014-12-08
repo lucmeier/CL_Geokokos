@@ -2,6 +2,6 @@ body {
     font-family: "Lucida Grande", Verdana, Arial, sans-serif;
 }
 
-gn {
-    color: red;
+span.gn {
+    color: blue;
 }

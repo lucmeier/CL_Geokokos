@@ -7,25 +7,33 @@
 </head>
 
 <body>
-<link href="{{ STATIC_URL }}css/style.css" rel="stylesheet" type="text/css" />
+<link href="{{ STATIC_URL }}css/style.css" rel="stylesheet" type="text/css"/>
 {% spaceless %}
-<a href="{% url 'page_view' yearbook previous_following.0 %}"><</a><div>  </div> <a href="{% url 'page_view' yearbook previous_following.1 %}">></a>
-    <div>
-<a href="{% url 'page_view' yearbook first_last.0 %}"><<</a><div>  </div> <a href="{% url 'page_view' yearbook first_last.1 %}">>></a>
-    </div>
-
+    <a class="previous" href="{% url 'page_view' yearbook previous_following.0 %}"><</a><span>  </span>
+    <a class="following" href="{% url 'page_view' yearbook previous_following.1 %}">></a>
+    <span>
+<a class="first_page" href="{% url 'page_view' yearbook first_last.0 %}"><<</a><span>  </span> <a class="last_page"
+                                                                                                  href="{% url 'page_view' yearbook first_last.1 %}">>></a>
+    </span>
+    <span class="page_content">
 {% for div in divs %}
-   <div>
-    {% for token in div %}
-        {% if token.0 == 'gn'%}
-           <gn>{{ token.1 }}</gn>
-        {% else %}
-            <token>{{ token.1 }}</token>
-        {% endif %}
-    {% endfor %}
+    <div>
+        {% for token in div %}
+            {% if token.0 == 'gn' %}
+                <span class="gn" id="{{ token.1 }}">{{ token.2 }}</span>
+            {% else %}
+                <span class="token" id="{{ token.1 }}">{{ token.2 }}</span>
+            {% endif %}
+        {% endfor %}
     </div>
 {% endfor %}
-</p>
+</span>
+
+    <span class="scan_image"></span>
+
+
+
+
 {% endspaceless %}
 </body>
 </html>

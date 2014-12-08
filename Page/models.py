@@ -17,12 +17,14 @@ class Page(models.Model):
     scan_url = models.CharField(max_length=50)  # file name of image scan
     pb_n = models.IntegerField(verbose_name='Facsimile No')
     yearbook = models.ForeignKey(Yearbook)
+    correct = models.BooleanField(blank=True)
 
     def __str__(self):
         return self.yearbook.file_name + ': Page ' + str(self.pb_n)
 
 
 class PageManager(models.Manager):
+    '''Contains methods that are needed to display pages.'''
     def _get_page(self, facs_no, yrb):
         '''Return page given facs_no and yearbook file_name.'''
         yrb = Yearbook.objects.all().filter(file_name=yrb)
@@ -30,7 +32,7 @@ class PageManager(models.Manager):
         return pg
 
     def get_previous_following(self, yrb, facs_no):
-        '''Returns facs_no of previous and following page. Returns current facs_no if there is no previous or following page in yearbook.'''
+        '''Return facs_no of previous and following page. Returns current facs_no if there is no previous or following page in yearbook.'''
         page = self._get_page(facs_no, yrb)
         page_id = page.id
         yearbook_id = page.yearbook.id
@@ -62,9 +64,9 @@ class PageManager(models.Manager):
             before = str()
             for tkn in div.tokens.all():
                 if tkn.id in geonames_token_ids:
-                    tkns.append(('gn', tkn.spaced_token(before)))
+                    tkns.append(('gn', geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before)))
                 else:
-                    tkns.append(('token', tkn.spaced_token(before)))
+                    tkns.append(('token', tkn.id, tkn.spaced_token(before)))
                 before = tkn.content
             divs.append(tkns)
         return divs
@@ -90,6 +92,23 @@ class PageManager(models.Manager):
         if following_page.yearbook_id != yrb_id:
             return facs_no
         return following_page.pb_n
+
+    def get_sentence(self, token_id):
+        '''Returns sentence containing given token.'''
+        token = Token.objects.get(id=token_id)
+        pg = token.page
+        tb_sentence_no = token.tb_key[:token.tb_key.rfind('-')]
+        page_tokens = Token.objects.all().filter(page=pg)
+        sentence = list()
+        for token in page_tokens:
+            if token.tb_key.startswith(tb_sentence_no):
+                sentence.append(token.spaced_token())
+        return ''.join(sentence)
+
+    def set_as_correct(self, request, page_id):
+        '''Called when users (un)marks page as correct.'''
+        pass
+
 
 
 class Token(models.Model):

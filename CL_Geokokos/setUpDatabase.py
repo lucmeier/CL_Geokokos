@@ -73,9 +73,9 @@ def import_corpus(file_name):
                 n = elem.attrib['facs']
             else:
                 n = -1
-            page_properties = ('dummy_scan_url', n, last_yearbook_id_inserted)
+            page_properties = ('dummy_scan_url', n, last_yearbook_id_inserted, False)
 
-            page_cursor.execute('''INSERT INTO Page_page (scan_url, pb_n, yearbook_id) VALUES (%s, %s, %s)''', page_properties)
+            page_cursor.execute('''INSERT INTO Page_page (scan_url, pb_n, yearbook_id, correct) VALUES (%s, %s, %s, %s)''', page_properties)
             geokokos_db.commit()
 
             #retrieving last page_id inserted
@@ -320,10 +320,10 @@ def import_swisstopo_data(file_name):
     swisstopo_cursor.close()
 
 
-#import_corpus('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1968_de.xml')
+#import_corpus('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de.xml')
 
-#import_swisstopo_data('/Users/lukasmeier/Programming/Facharbeit/facharbeit/ch/uzh/cl/kokos/swisstopo/geolocations.sql')
+import_swisstopo_data('/Users/lukasmeier/Programming/Facharbeit/protoype/kokos/swisstopo/geolocations.sql')
 
-import_geonames('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1968_de-ner.xml', 'SAC-Jahrbuch_1968_de.xml')
+import_geonames('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de-ner.xml', 'SAC-Jahrbuch_1969_de.xml')
 
 
