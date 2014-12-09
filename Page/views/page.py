@@ -10,7 +10,7 @@ import Page
 
 def main(request, yrb, facs_no):
     pageManager = Page.models.PageManager(yrb, facs_no)
-    pg = pageManager.get_page()
+    pg = pageManager.page
     #mark as correct form
     markAsCorrectForm = MarkAsCorrectForm(request.POST or None, initial={'correct' : pg.correct})#to set initial value at runtime
     box_checked = None

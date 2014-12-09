@@ -25,36 +25,25 @@ class Page(models.Model):
 
 class PageManager(models.Manager):
 
+     '''Contains methods that are needed to display pages.'''
+
     def __init__(self, yrb, facs_no):
-        self.yrb = yrb
         self.facs_no = int(facs_no)
-
-    '''Contains methods that are needed to display pages.'''
-
-    def get_page(self):
-        print(self.yrb, self.facs_no)
-        '''Return page given facs_no and yearbook file_name.'''
-        yearbook_id = Yearbook.objects.get(file_name=self.yrb).id
-        pg = Page.objects.get(yearbook=yearbook_id, pb_n=self.facs_no)
-        return pg
-
+        self.yearbook = Yearbook.objects.get(file_name=yrb)
+        self.page = Page.objects.get(yearbook=self.yearbook.id, pb_n=self.facs_no)
 
     def get_previous_following(self):
         '''Return facs_no of previous and following page. Returns current facs_no if there is no previous or following page in yearbook.'''
-        page = self.get_page()
-        page_id = page.id
-        yearbook_id = page.yearbook.id
-        return self._get_previous(page_id, yearbook_id), self._get_following(page_id, yearbook_id)
+        return self._get_previous(), self._get_following()
 
     def get_first_last(self):
         '''Returns facs_no of first and last page in yearbook'''
-        yearb = Yearbook.objects.all().get(file_name=self.yrb)
-        pages = list(Page.objects.all().filter(yearbook=yearb))
+        pages = list(Page.objects.all().filter(yearbook=self.yearbook))
         return pages[0].pb_n, pages[-1].pb_n
 
     def div_list(self):
         '''Returns a list of div elements containing (token, attribute) tuples for a given page.'''
-        pg = self.get_page()
+        pg = self.page
         tokens = Token.objects.all().filter(page=pg)
         layoutElements = LayoutElement.objects.all().filter(tokens=tokens)
         geonames = GeoName.objects.all().filter(tokens=tokens)
@@ -79,27 +68,28 @@ class PageManager(models.Manager):
             divs.append(tkns)
         return divs
 
-    def _get_previous(self, page_id, yrb_id):
+    def _get_previous(self):
         '''Returns facs_no of preceeding page .'''
-        previous = page_id - 1
+        previous = self.page.id - 1
         try:
             previous_page = Page.objects.get(id=previous)
         except exceptions.ObjectDoesNotExist:
             return self.facs_no
-        if previous_page.yearbook_id != yrb_id:
+        if previous_page.yearbook_id != self.yearbook.id:
             return self.facs_no
         return previous_page.pb_n
 
-    def _get_following(selfs, page_id, yrb_id):
+    def _get_following(self):
         '''Returns facs no of following page'''
-        following = page_id + 1
+        following = self.page.id + 1
         try:
             following_page = Page.objects.get(id=following)
         except exceptions.ObjectDoesNotExist:
             return self.facs_no
-        if following_page.yearbook_id != yrb_id:
+        if following_page.yearbook_id != self.yearbook.id:
             return self.facs_no
         return following_page.pb_n
+
 
     def get_sentence(self, token_id):
         '''Returns sentence containing given token.'''
