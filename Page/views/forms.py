@@ -3,4 +3,6 @@ __author__ = 'lukasmeier'
 from django import forms
 
 class MarkAsCorrectForm(forms.Form):
-    pass
+
+
+    correct = forms.BooleanField(widget=forms.CheckboxInput(attrs={'onclick' : 'submit();'}),required=False, label="vollständig korrigiert")

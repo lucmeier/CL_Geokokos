@@ -127,7 +127,7 @@ def  _process_stid(stid):
     if stid.startswith('s'):
         return (stid[1:], 'ST')
     if stid == '0':
-        return (stid, 'ST')
+        return (stid, 'UKN')
     if stid.startswith('g'):
         return (stid[1:], 'GN') #geonames
     if stid[:2] == ('cg'):
@@ -141,6 +141,16 @@ def  _process_stid(stid):
     else:
         return (stid, 'UKN')
 
+
+def _get_token_ids(spannos, yearbook):
+    '''Returns a list containing django token ids given '''
+    token_ids = list()
+    if spannos is not None:
+        for spanno in spannos:
+            if spanno is not None:
+                if _get_token_id(spanno, yearbook) is not None:
+                    token_ids.append(_get_token_id(spanno, yearbook))
+    return token_ids
 
 
 def import_geonames(file_name, yearbook):
@@ -163,13 +173,7 @@ WHERE Page_geolocation.id = Page_geolocation_geoloc_reference.geolocation_id
             result = id_cursor.fetchone()
 
             spannos = geoname.attrib['span'].split(', ') #one or several spannos
-            token_ids = list()
-            if spannos is not None:
-                for spanno in spannos:
-                    if spanno is not None:
-                        if _get_token_id(spanno, yearbook) is not None:
-                            token_ids.append(_get_token_id(spanno, yearbook))
-
+            token_ids = _get_token_ids(spannos, yearbook)
             #insert geoname into database/ retrieve id
             if result is not None:
                 geoname_cursor = geokokos_db.cursor()
@@ -184,6 +188,11 @@ WHERE Page_geolocation.id = Page_geolocation_geoloc_reference.geolocation_id
                     geokokos_db.commit()
                     counter += 1
                     print (token_id, result, 'no', counter)
+
+    if stid[1] == 'UKN':
+        #insert entry into GeoNameUnclear table
+        spannos = geoname.attrib['span'].split(', ')
+        token_ids =
 
     print(20 * '*' + 'finished adding geonames' + 20 * '*')
     geokokos_db.close()

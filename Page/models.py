@@ -24,29 +24,37 @@ class Page(models.Model):
 
 
 class PageManager(models.Manager):
+
+    def __init__(self, yrb, facs_no):
+        self.yrb = yrb
+        self.facs_no = int(facs_no)
+
     '''Contains methods that are needed to display pages.'''
-    def _get_page(self, facs_no, yrb):
+
+    def get_page(self):
+        print(self.yrb, self.facs_no)
         '''Return page given facs_no and yearbook file_name.'''
-        yrb = Yearbook.objects.all().filter(file_name=yrb)
-        pg = Page.objects.get(yearbook=yrb, pb_n=int(facs_no))
+        yearbook_id = Yearbook.objects.get(file_name=self.yrb).id
+        pg = Page.objects.get(yearbook=yearbook_id, pb_n=self.facs_no)
         return pg
 
-    def get_previous_following(self, yrb, facs_no):
+
+    def get_previous_following(self):
         '''Return facs_no of previous and following page. Returns current facs_no if there is no previous or following page in yearbook.'''
-        page = self._get_page(facs_no, yrb)
+        page = self.get_page()
         page_id = page.id
         yearbook_id = page.yearbook.id
-        return self._get_previous(page_id, yearbook_id, facs_no), self._get_following(page_id, yearbook_id, facs_no)
+        return self._get_previous(page_id, yearbook_id), self._get_following(page_id, yearbook_id)
 
-    def get_first_last(self, yrb):
+    def get_first_last(self):
         '''Returns facs_no of first and last page in yearbook'''
-        yearb = Yearbook.objects.all().get(file_name=yrb)
+        yearb = Yearbook.objects.all().get(file_name=self.yrb)
         pages = list(Page.objects.all().filter(yearbook=yearb))
         return pages[0].pb_n, pages[-1].pb_n
 
-    def div_list(self, yrb, facs_no):
+    def div_list(self):
         '''Returns a list of div elements containing (token, attribute) tuples for a given page.'''
-        pg = self._get_page(facs_no, yrb)
+        pg = self.get_page()
         tokens = Token.objects.all().filter(page=pg)
         layoutElements = LayoutElement.objects.all().filter(tokens=tokens)
         geonames = GeoName.objects.all().filter(tokens=tokens)
@@ -71,26 +79,26 @@ class PageManager(models.Manager):
             divs.append(tkns)
         return divs
 
-    def _get_previous(self, page_id, yrb_id, facs_no):
+    def _get_previous(self, page_id, yrb_id):
         '''Returns facs_no of preceeding page .'''
         previous = page_id - 1
         try:
             previous_page = Page.objects.get(id=previous)
         except exceptions.ObjectDoesNotExist:
-            return facs_no
+            return self.facs_no
         if previous_page.yearbook_id != yrb_id:
-            return facs_no
+            return self.facs_no
         return previous_page.pb_n
 
-    def _get_following(selfs, page_id, yrb_id, facs_no):
+    def _get_following(selfs, page_id, yrb_id):
         '''Returns facs no of following page'''
         following = page_id + 1
         try:
             following_page = Page.objects.get(id=following)
         except exceptions.ObjectDoesNotExist:
-            return facs_no
+            return self.facs_no
         if following_page.yearbook_id != yrb_id:
-            return facs_no
+            return self.facs_no
         return following_page.pb_n
 
     def get_sentence(self, token_id):
@@ -105,9 +113,6 @@ class PageManager(models.Manager):
                 sentence.append(token.spaced_token())
         return ''.join(sentence)
 
-    def set_as_correct(self, request, page_id):
-        '''Called when users (un)marks page as correct.'''
-        pass
 
 
 
@@ -177,6 +182,18 @@ class GeoName(models.Model):
     def __str__(self):
         return self.geolocation.name
 
+class GeoNameUnclear(models.Model):
+    '''
+    Representing GeoName that could not be linked with GeoLocation. This can happen
+   in two instances:
+    a) Tokens are certain to be a GeoName. However, the GeoName is ambiguous (i. e. Schafberg).
+    b) Tokens are deemed to be a GeoName. However, no GeoLocation under this name is known (i. e. Textberggipfel).
+    Users can add notes to these objects (when they believe to have information of value concerning this
+    GeonName that would later allow for the GeoName to be attributed to a GeoLocation.
+    '''
+    tokens = models.ManyToManyField(Token)
+    type = models.CharField(max_length=4, choices=(('UNKN', 'unknown'), ('AMBG', 'ambiguous')))
+    user_notes = models.TextField(max_length=500)
 
 class LayoutElement(models.Model):
     tokens = models.ManyToManyField(Token)
