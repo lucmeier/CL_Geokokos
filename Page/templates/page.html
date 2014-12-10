@@ -26,8 +26,10 @@
         {% for token in div %}
             {% if token.0 == 'gn' %}
                 <span class="gn" id="{{ token.1 }}">{{ token.2 }}</span>
-            {%  elif token.0 == 'unkn' or token.0 == 'ambg '%}
-                <span class="{{ token.0 }}" id="{{ token.1 }}">{{ token.2 }}</span>
+            {%  elif token.0 == 'unkn' %}
+                <span class="unkn" id="{{ token.1 }}">{{ token.2 }}</span>
+            {% elif token.0 == 'ambg' %}
+                <span class="ambg" id="{{ token.1 }}">{{ token.2 }}</span>
             {% else %}
                 <span class="token" id="{{ token.1 }}">{{ token.2 }}</span>
             {% endif %}
@@ -37,9 +39,13 @@
 </span>
 
     <span class="scan_image"></span>
-
-
-
+<p>
+<span class="geoname_list">
+{% for geoname in geonames %}
+<div class="geoname_item" id="{{ geoname.2 }}" type="{{ geoname.0 }}">{{ geoname.3 }}</div>
+{% endfor %}
+</span>
+</p>
 
 {% endspaceless %}
 </body>

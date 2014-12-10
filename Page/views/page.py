@@ -22,11 +22,15 @@ def main(request, yrb, facs_no):
             pg.correct = False
         pg.save()
     #displaying page content
-    divs = pageManager.div_list()
+    spans = pageManager.spans_list()
+    #displaying navigation links
     previous_following_page = pageManager.get_previous_following()
     first_last_page = pageManager.get_first_last()
+    #displaying geonames_list
+    geonames = pageManager.get_geonames()
     #processing the tokens should be done here rather than at the template level, the fewer for loops etc in the template the better.
     #Templates should only display content that has  a l r e a d y  been processed. Better still, the processing should be done in a model manager.
-    return render_to_response('Page/templates/page.html', {'facs_no' : facs_no, 'yearbook' : yrb, 'divs': divs, 'previous_following' : previous_following_page,
-                                                        'first_last' : first_last_page, 'correctForm' : markAsCorrectForm, 'correctFormValue' : box_checked}, context_instance=RequestContext(request))
+    return render_to_response('Page/templates/page.html', {'facs_no' : facs_no, 'yearbook' : yrb, 'divs': spans, 'previous_following' : previous_following_page,
+                                                        'first_last' : first_last_page, 'correctForm' : markAsCorrectForm, 'correctFormValue' : box_checked,
+                                                        'geonames' : geonames}, context_instance=RequestContext(request))
 

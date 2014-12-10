@@ -25,10 +25,14 @@ class Page(models.Model):
 
 class PageManager(models.Manager):
     '''Contains methods that are needed to display pages.'''
+
     def __init__(self, yrb, facs_no):
         self.facs_no = int(facs_no)
         self.yearbook = Yearbook.objects.get(file_name=yrb)
         self.page = Page.objects.get(yearbook=self.yearbook.id, pb_n=self.facs_no)
+        self.tokens = Token.objects.all().filter(page=self.page)
+        self.geonames = GeoName.objects.all().filter(tokens=self.tokens)
+        self.unclear_geonames = GeoNameUnclear.objects.all().filter(tokens=self.tokens)
 
     def get_previous_following(self):
         '''Return facs_no of previous and following page. Returns current facs_no if there is no previous or following page in yearbook.'''
@@ -39,7 +43,7 @@ class PageManager(models.Manager):
         pages = list(Page.objects.all().filter(yearbook=self.yearbook))
         return pages[0].pb_n, pages[-1].pb_n
 
-    def div_list(self):
+    def spans_list(self):
         '''Returns a list of div elements containing (token, attribute) tuples for a given page.'''
         pg = self.page
         tokens = Token.objects.all().filter(page=pg)
@@ -101,7 +105,6 @@ class PageManager(models.Manager):
             return self.facs_no
         return following_page.pb_n
 
-
     def get_sentence(self, token_id):
         '''Returns sentence containing given token.'''
         token = Token.objects.get(id=token_id)
@@ -114,6 +117,23 @@ class PageManager(models.Manager):
                 sentence.append(token.spaced_token())
         return ''.join(sentence)
 
+    def get_geonames(self):
+        '''Returns  list of (unclear and clear) geonames  in page. Each item is a
+        (type, sort_id, id, name) tuple. id depends on type.
+        gn: geoname.id/ unkn|ambg: unclear_geoname_id.
+        Name is lemma name for gn type and name as in token(s) for ambg or unkn type.'''
+        clear_unclear_geonames = list()
+        for clear_geoname in self.geonames:
+            sort_id = clear_geoname.tokens.all()[0].id
+            clear_unclear_geonames.append(('GN', sort_id, clear_geoname.id, clear_geoname.geolocation.name))
+        for unclear_geoname in self.unclear_geonames:
+            sort_id = unclear_geoname.tokens.all()[0].id
+            token_content = list()
+            for token in unclear_geoname.tokens.all():
+                token_content.append(token.content)
+            token_content = ' '.join(token_content)
+            clear_unclear_geonames.append((unclear_geoname.type, sort_id, unclear_geoname.id, token_content))
+        return sorted(list(set(clear_unclear_geonames)), key=lambda srt : srt[1])
 
 class Token(models.Model):
     content = models.CharField(max_length=200)  # what the token contains
@@ -123,6 +143,10 @@ class Token(models.Model):
 
     def __str__(self):
         return self.tb_key + ': ' + self.content
+
+    def __lt__(self, other):
+        '''sorting method'''
+        return self.tb_key < other.tb_key
 
     def spaced_token(self, before):
         '''Returns token with correctly added spaces before or after it. '''
