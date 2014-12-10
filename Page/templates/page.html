@@ -26,6 +26,8 @@
         {% for token in div %}
             {% if token.0 == 'gn' %}
                 <span class="gn" id="{{ token.1 }}">{{ token.2 }}</span>
+            {%  elif token.0 == 'unkn' or token.0 == 'ambg '%}
+                <span class="{{ token.0 }}" id="{{ token.1 }}">{{ token.2 }}</span>
             {% else %}
                 <span class="token" id="{{ token.1 }}">{{ token.2 }}</span>
             {% endif %}

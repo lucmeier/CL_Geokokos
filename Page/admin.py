@@ -21,6 +21,10 @@ class TokenAdmin(admin.ModelAdmin):
 class GeoNameAdmin(admin.ModelAdmin):
     readonly_fields = ('tokens', 'geolocation')
 
+class GeoNameUnclearAdmin(admin.ModelAdmin):
+    readonly_fields = ('tokens',)
+
+
 class LayoutElementAdmin(admin.ModelAdmin):
     readonly_fields = ('tokens',)
 
@@ -39,6 +43,7 @@ admin.site.register(models.Token, TokenAdmin)
 admin.site.register(models.GeoLocation, GeoLocationAdmin)
 admin.site.register(models.GeoName, GeoNameAdmin)
 admin.site.register(models.LayoutElement, LayoutElementAdmin)
+admin.site.register(models.GeoNameUnclear, GeoNameUnclearAdmin)
 #admin.site.register(GeoCoordinates)
 #admin.site.register(ForeignGeoLocationId)
 

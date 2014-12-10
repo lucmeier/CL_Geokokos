@@ -5,3 +5,11 @@ body {
 span.gn {
     color: blue;
 }
+
+span.unkn {
+    color : green;
+}
+
+span.ambg {
+    color : red
+}

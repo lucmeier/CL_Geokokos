@@ -24,9 +24,7 @@ class Page(models.Model):
 
 
 class PageManager(models.Manager):
-
-     '''Contains methods that are needed to display pages.'''
-
+    '''Contains methods that are needed to display pages.'''
     def __init__(self, yrb, facs_no):
         self.facs_no = int(facs_no)
         self.yearbook = Yearbook.objects.get(file_name=yrb)
@@ -51,6 +49,15 @@ class PageManager(models.Manager):
         for geoname in geonames:
             for token in geoname.tokens.all():
                 geonames_token_ids.append(token.id)
+        unclear_geonames = GeoNameUnclear.objects.all().filter(tokens=tokens)
+        unknown_geonames_token_ids = list()
+        ambiguous_geonames_token_ids = list()
+        for unclear_geoname in unclear_geonames:
+            for token in unclear_geoname.tokens.all():
+                if unclear_geoname.type == 'UNKN':
+                    unknown_geonames_token_ids.append((token.id))
+                if unclear_geoname.type == 'AMBG':
+                    ambiguous_geonames_token_ids.append(token.id)
         layoutElements_unique = list()
         for entry in layoutElements:
             if entry not in layoutElements_unique:
@@ -62,6 +69,10 @@ class PageManager(models.Manager):
             for tkn in div.tokens.all():
                 if tkn.id in geonames_token_ids:
                     tkns.append(('gn', geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before)))
+                elif tkn.id in unknown_geonames_token_ids:
+                    tkns.append(('unkn', unclear_geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before)))
+                elif tkn.id in ambiguous_geonames_token_ids:
+                    tkns.append(('ambg', unclear_geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before)))
                 else:
                     tkns.append(('token', tkn.id, tkn.spaced_token(before)))
                 before = tkn.content
@@ -102,8 +113,6 @@ class PageManager(models.Manager):
             if token.tb_key.startswith(tb_sentence_no):
                 sentence.append(token.spaced_token())
         return ''.join(sentence)
-
-
 
 
 class Token(models.Model):
@@ -183,7 +192,10 @@ class GeoNameUnclear(models.Model):
     '''
     tokens = models.ManyToManyField(Token)
     type = models.CharField(max_length=4, choices=(('UNKN', 'unknown'), ('AMBG', 'ambiguous')))
-    user_notes = models.TextField(max_length=500)
+    user_notes = models.TextField(max_length=500, blank=True, default='')
+
+    def __str__(self):
+        return self.type
 
 class LayoutElement(models.Model):
     tokens = models.ManyToManyField(Token)
