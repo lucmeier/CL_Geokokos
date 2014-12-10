@@ -1,7 +1,5 @@
 from django.db import models
-from django.contrib import admin
-from django.core import exceptions, urlresolvers
-import CL_Geokokos
+from django.core import exceptions
 # Create your models here.
 
 
@@ -135,6 +133,7 @@ class PageManager(models.Manager):
             clear_unclear_geonames.append((unclear_geoname.type, sort_id, unclear_geoname.id, token_content))
         return sorted(list(set(clear_unclear_geonames)), key=lambda srt : srt[1])
 
+
 class Token(models.Model):
     content = models.CharField(max_length=200)  # what the token contains
     tb_key = models.CharField(max_length=15,
@@ -205,6 +204,7 @@ class GeoName(models.Model):
     def __str__(self):
         return self.geolocation.name
 
+
 class GeoNameUnclear(models.Model):
     '''
     Representing GeoName that could not be linked with GeoLocation. This can happen
@@ -224,6 +224,3 @@ class GeoNameUnclear(models.Model):
 class LayoutElement(models.Model):
     tokens = models.ManyToManyField(Token)
     type = models.CharField(max_length=3)
-
-
-

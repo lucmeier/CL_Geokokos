@@ -1,14 +1,11 @@
 __author__ = 'lukasmeier'
-
-
 '''Populate MySQL database for the Page app with content from Text + Berg Corpus and Geolocation databases'''
 
-import mysql.connector
 import sqlite3
 from xml.etree import cElementTree as ET
+import mysql.connector
 
 geokokos_db =  mysql.connector.connect(host="localhost",user="root", passwd="", db ="geokokos_db")
-
 
 def _get_zip_codes(zip_code, zip_code_file='/Users/lukasmeier/Programming/Facharbeit/CL_Geokokos/CL_Geokokos/information_sources/plz_l_20141117.txt'):
     zip_codes = dict()
@@ -18,7 +15,6 @@ def _get_zip_codes(zip_code, zip_code_file='/Users/lukasmeier/Programming/Fachar
             if line[2] not in zip_codes:
                 zip_codes[line[2]] =  line[4]
     return zip_codes.get(zip_code, 'UNKN')
-
 
 def _open_div(token_id):
     layout_element_cursor = geokokos_db.cursor()
@@ -32,7 +28,6 @@ def _open_div(token_id):
     geokokos_db.commit()
     layout_element_cursor.close()
 
-
 def _add_token_to_div(token_id):
     '''Adds token to last layout element that has been created'''
     layout_element_cursor = geokokos_db.cursor()
@@ -41,7 +36,6 @@ def _add_token_to_div(token_id):
     layout_element_cursor.execute('''INSERT INTO Page_layoutelement_tokens (layoutelement_id, token_id) VALUES (%s, %s)''', (last_layout_element_id_inserted, token_id))
     geokokos_db.commit()
     layout_element_cursor.close()
-
 
 def import_corpus(file_name):
     #Adding Yearbook
@@ -52,14 +46,11 @@ def import_corpus(file_name):
     yearbook_cursor.execute ('''INSERT INTO Page_yearbook (year, file_name) VALUES(%s, %s)''', yearbook_properties)
     geokokos_db.commit()
     yearbook_cursor.close()
-
     #Adding Pages
-    #fetch last yearbook id used
     yearbook_id_cursor = geokokos_db.cursor()
     yearbook_id_cursor.execute('''SELECT id FROM Page_yearbook WHERE id = (SELECT MAX(id) FROM Page_yearbook)''')
     last_yearbook_id_inserted = yearbook_id_cursor.fetchone()[0]
     yearbook_id_cursor.close()
-
     #prepare xml processing
     page_tokens_spannos = list()
     yearbook_iterator = iter(ET.iterparse(file_name,  events=('start', 'end')))
@@ -72,7 +63,6 @@ def import_corpus(file_name):
                 last_div_tokens.append(len(page_tokens_spannos))
             else:
                 last_div_tokens.append(len(page_tokens_spannos))
-
         if event == 'start' and elem.tag == 'pb':
             #inserting one page into database
             page_cursor = geokokos_db.cursor()
@@ -82,15 +72,12 @@ def import_corpus(file_name):
             else:
                 n = -1
             page_properties = ('dummy_scan_url', n, last_yearbook_id_inserted, False)
-
             page_cursor.execute('''INSERT INTO Page_page (scan_url, pb_n, yearbook_id, correct) VALUES (%s, %s, %s, %s)''', page_properties)
             geokokos_db.commit()
-
             #retrieving last page_id inserted
             page_cursor.execute('''SELECT id FROM Page_page WHERE id = (SELECT MAX(id) FROM Page_page)''')
             last_page_id_inserted = page_cursor.fetchone()[0]
             page_cursor.close()
-
             #adding tokens to page
             last_token_id_inserted = int
             for i in enumerate(page_tokens_spannos):
@@ -110,10 +97,8 @@ def import_corpus(file_name):
             print ('added page ' +  n)
             last_div_tokens.clear()
             page_tokens_spannos.clear()
-
     geokokos_db.close()
     print(20 * '*' + 'finished adding yearbook' + 20 * '*')
-
 
 def _get_token_id(spanno, yearbook):
     '''Fetch django token id given spanno and yearbook'''
@@ -127,11 +112,8 @@ AND Page_yearbook.file_name = %s''', (spanno, yearbook[:-4]))
     if result is not None:
         return result[0]
 
-
 def  _process_stid(stid):
-    '''
-    preprocess messy stid no (all of them are messy)
-    '''
+    '''preprocess messy stid no (all of them are messy'''
     if stid.startswith('s') and stid != 's23':
         return (stid[1:], 'ST')
     if stid == '0':
@@ -151,7 +133,6 @@ def  _process_stid(stid):
     else:
         return (stid, 'UNKN')
 
-
 def _get_token_ids(spannos, yearbook):
     '''Returns a list containing django token ids given '''
     token_ids = list()
@@ -161,7 +142,6 @@ def _get_token_ids(spannos, yearbook):
                 if _get_token_id(spanno, yearbook) is not None:
                     token_ids.append(_get_token_id(spanno, yearbook))
     return token_ids
-
 
 def _get_geolocation_id(stid):
     cursor = geokokos_db.cursor(buffered=True)
@@ -175,7 +155,6 @@ FROM Page_geolocation_geoloc_reference, Page_GeoLocationReference, Page_geolocat
 WHERE Page_geolocation.id = Page_geolocation_geoloc_reference.geolocation_id
     AND Page_geolocation_geoloc_reference.geolocationreference_id = Page_geolocationreference.id AND value = %s''', (swisstopo_id,))
         return cursor.fetchone()[3]
-
     elif stid_type == 'ZIP':
         place_name = _get_zip_codes(stid[0])
         cursor.execute("""SELECT name, Page_geolocation.type, value, Page_geolocation.id
@@ -187,7 +166,6 @@ WHERE Page_geolocation.id = Page_geolocation_geoloc_reference.geolocation_id
             return None
         else:
             return ret[3]
-
 
 def _create_geoname(geolocation_id, token_ids):
     cursor = geokokos_db.cursor(buffered=True)
@@ -213,14 +191,10 @@ def _create_geoname_unclear(type, token_ids):
         geokokos_db.commit()
     cursor.close()
 
-
 def import_geonames(file_name, yearbook):
-    '''
-    import geonames for specific yearbook.
-    '''
+    '''import geonames for specific yearbook. '''
     root = ET.parse(file_name).getroot()
     print(20 * '*' + 'start adding geonames' + 20 * '*')
-    counter = 0
     for geoname in root[0]:
         stid = _process_stid(geoname.attrib['stid'])
         spannos = geoname.attrib['span'].split(', ') #one or several spannos
@@ -235,9 +209,7 @@ def import_geonames(file_name, yearbook):
     geokokos_db.close()
 
 def get_mapping(source):
-    '''
-    @:returns dictionary mapping each GeoLocation type (Fels, Wald, Huegel ...) from Swisstopo or other source (Fels, Wald, Huegel ...) to a TB type.
-    '''
+    '''Returns dictionary mapping each GeoLocation type (Fels, Wald, Huegel ...) from Swisstopo or other source (Fels, Wald, Huegel ...) to a TB type.'''
     mountain, glacier, lake, city, valley, mountain_cabin, misc = 'MO', 'GL', 'LA', 'PL', 'VL', 'MC', 'MS' #Text + Berg GeoTypes (Misc has been added)
     if source == 'swisstopo':
         return {
@@ -308,62 +280,50 @@ def get_mapping(source):
 
         }
 
-
 def import_swisstopo_data(file_name):
     swisstopo_db = sqlite3.connect(file_name)
     #Adding Swisstopo Entries
     geokokos_types = get_mapping('swisstopo')
     swisstopo_cursor = swisstopo_db.cursor()
     swisstopo_cursor.execute('''SELECT id, name, ch_y, ch_x, latitude, longitude, kind FROM swisstopo;''')
-
     #inserting swisstopo geolocation into geokokos_db
     print(20 * '*' + 'start adding geolocations' + 20 * '*')
-
     for swisstopo_entry in swisstopo_cursor.fetchall():
         geokokos_cursor = geokokos_db.cursor()
-
         #insert name and type into database/retrieve last geolocation id inserted
         geokokos_cursor.execute('''INSERT INTO Page_geolocation  (name, type) VALUES (%s, %s)''', (swisstopo_entry[1], geokokos_types[swisstopo_entry[6]]))
         geokokos_db.commit()
         geokokos_cursor.execute('''SELECT id FROM Page_geolocation WHERE id = (SELECT MAX(id) FROM Page_geolocation)''')
         last_geolocation_id_inserted = geokokos_cursor.fetchone()[0]
-
         #insert swisstopo id into database/ retrieve last external reference id inserted
         geokokos_cursor.execute('''INSERT INTO Page_geolocationreference (value, type) VALUES (%s, %s)''', (swisstopo_entry[0], 'ST'))
         geokokos_db.commit()
         geokokos_cursor.execute('''SELECT id FROM Page_geolocation WHERE id = (SELECT MAX(id) FROM Page_geolocation)''')
         last_reference_id_inserted = geokokos_cursor.fetchone()[0]
-
         #insert many to many relation (geoloc reference [swisstopo|geonames|...)
         geokokos_cursor.execute('''INSERT INTO Page_geolocation_geoloc_reference (geolocation_id, geolocationreference_id) VALUES (%s, %s)''', (last_geolocation_id_inserted, last_reference_id_inserted))
         geokokos_db.commit()
-
         #insert wgs coordinates into database/retrieve id used
         geokokos_cursor.execute('''INSERT INTO Page_geocoordinates(type, latitude, longitude) VALUES (%s, %s, %s)''', ('WGS', swisstopo_entry[4], swisstopo_entry[5]))
         geokokos_db.commit()
         geokokos_cursor.execute('''SELECT id FROM Page_geocoordinates WHERE id = (SELECT MAX(id) FROM Page_geocoordinates)''')
         last_swisstopo_geocoordinates_id_inserted = geokokos_cursor.fetchone()[0]
-
         #insert swisstopo into database/retrieve id used
         geokokos_cursor.execute('''INSERT INTO Page_geocoordinates(type, latitude, longitude) VALUES (%s, %s, %s)''', ('ST', swisstopo_entry[2], swisstopo_entry[3]))
         geokokos_db.commit()
         geokokos_cursor.execute('''SELECT id FROM Page_geocoordinates WHERE id = (SELECT MAX(id) FROM Page_geocoordinates)''')
         last_wgs_geocoordinates_id_inserted = geokokos_cursor.fetchone()[0]
-
         #insert many to many relation (coordinates)
         geokokos_cursor.execute('''INSERT INTO Page_geolocation_coordinates(geolocation_id, geocoordinates_id) VALUES (%s, %s)''', (last_geolocation_id_inserted, last_swisstopo_geocoordinates_id_inserted))
         geokokos_cursor.execute('''INSERT INTO Page_geolocation_coordinates(geolocation_id, geocoordinates_id) VALUES (%s, %s)''', (last_geolocation_id_inserted, last_wgs_geocoordinates_id_inserted))
         geokokos_db.commit()
-
         geokokos_cursor.close()
-
         print ('added ' + swisstopo_entry[1])
-
     print(20 * '*' + 'finished adding geolocations' + 20 * '*')
     swisstopo_cursor.close()
 
 
-#import_corpus('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1989_de.xml')
+import_corpus('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1989_de.xml')
 
 #import_swisstopo_data('/Users/lukasmeier/Programming/Facharbeit/protoype/kokos/swisstopo/geolocations.sql')
 
