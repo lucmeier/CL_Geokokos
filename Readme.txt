@@ -13,7 +13,7 @@ Aufsetzen
 1. https://github.com/lucmeier/CL_Geokokos klonen
 2. local_settings.py in Hauptverzeichnis kopieren (https://pub.cl.uzh.ch:11443/lukasmeier/geokokos_daten/tree/master)
 3. MySQL-Datenbank erstellen: CREATE SCHEMA `geokokos_db` DEFAULT CHARACTER SET utf8;
-4. manage.py -syncdb ausführen. Mit diesem Schritt werden in der Datenbank die entsprechenden Tabellen angelegt. 
+4. manage.py syncdb ausführen. Mit diesem Schritt werden in der Datenbank die entsprechenden Tabellen angelegt. 
 5. setUpDatabase-py durchlaufen lassen (Kann einige Zeit dauern):
   1. Swisstopo daten laden: Funktion import_swisstopo_data(path_to_swisstopo.sql). Dieser Schritt ist nur einmal nötig.
   2. gewünschte Korpora laden: Funktion import_corpus(path_to_corpus_file)
@@ -23,7 +23,7 @@ Aufsetzen
   In einem solchen Fall einfach die Funktion import_geonames nochmals einzeln starten.
 
 Starten
-1. Projekt lokal starten: manage.py -runserver
+1. Projekt lokal starten: manage.py runserver
 2. Administration: http://127.0.0.1:8000/admin/
 3. Aufbau der URLs: http://127.0.0.1:8000/kokos/SAC-Jahrbuch_YYYY_LANGCODE/FACSNO
 
