@@ -7,7 +7,7 @@ import mysql.connector
 
 geokokos_db = local_setting = mysql.connector.connect(host="localhost",user="root", passwd="", db ="geokokos_db")
 
-def _get_zip_codes(zip_code, zip_code_file='/Users/lukasmeier/Programming/Facharbeit/CL_Geokokos/CL_Geokokos/information_sources/plz_l_20141117.txt'):
+def _get_zip_codes(zip_code, zip_code_file='information_sources/plz_l_20141117.txt'):
     zip_codes = dict()
     with open(zip_code_file, 'r') as f:
         for line in f.readlines():
