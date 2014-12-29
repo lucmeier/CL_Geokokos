@@ -184,11 +184,13 @@ class PageManager(models.Manager):
     def get_coordinates_java_script_array(self):
         '''Returns a '''
         js_list = list()
+        colour = {'MC' : 'pink', 'MO' : 'red', 'MS' : 'green', 'LK' : 'blue', 'PL' : 'green', 'GL' : 'pink', 'VL' : 'pink'}
         for entry in self.get_coordinates():
             js_dict = dict()
             js_dict['name'] = entry[0]
             js_dict['longitude'] = str(entry[2][0])
             js_dict['latitude'] = str(entry[2][1])
+            js_dict['colour'] = colour.get(entry[1], 'orange')
             js_list.append(js_dict)
         return json.dumps(js_list)
 
