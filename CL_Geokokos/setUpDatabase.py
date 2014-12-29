@@ -5,7 +5,7 @@ import sqlite3
 from xml.etree import cElementTree as ET
 import mysql.connector
 
-geokokos_db =  mysql.connector.connect(host="localhost",user="root", passwd="", db ="geokokos_db")
+geokokos_db = local_setting = mysql.connector.connect(host="localhost",user="root", passwd="", db ="geokokos_db")
 
 def _get_zip_codes(zip_code, zip_code_file='/Users/lukasmeier/Programming/Facharbeit/CL_Geokokos/CL_Geokokos/information_sources/plz_l_20141117.txt'):
     zip_codes = dict()
@@ -169,8 +169,8 @@ WHERE Page_geolocation.id = Page_geolocation_geoloc_reference.geolocation_id
 
 def _create_geoname(geolocation_id, token_ids):
     cursor = geokokos_db.cursor(buffered=True)
-    cursor.execute('''INSERT INTO Page_geoname (validation_state, geolocation_id)
-        VALUES (%s, %s)''', ('n/a', geolocation_id))
+    cursor.execute('''INSERT INTO Page_geoname (geolocation_id, validation_state, user_notes)
+        VALUES (%s, %s, %s)''', (geolocation_id, 'uned', ''))
     geokokos_db.commit()
     cursor.execute('''SELECT id FROM Page_geoname WHERE id = (SELECT MAX(id) FROM Page_geoname)''')
     last_geoname_id_inserted = cursor.fetchone()[0]
@@ -182,7 +182,7 @@ def _create_geoname(geolocation_id, token_ids):
 
 def _create_geoname_unclear(type, token_ids):
     cursor = geokokos_db.cursor(buffered=True)
-    cursor.execute('''INSERT INTO Page_geonameunclear (type, user_notes) VALUES (%s, %s)''', (type, ''))
+    cursor.execute('''INSERT INTO Page_geonameunclear (type, user_notes, validation_state) VALUES (%s, %s, %s)''', (type, '', 'uned'))
     geokokos_db.commit()
     cursor.execute('''SELECT id FROM Page_geonameunclear WHERE id = (SELECT MAX(id) FROM Page_geonameunclear)''')
     last_geoname_unclear_id_inserted = cursor.fetchone()[0]
@@ -323,9 +323,9 @@ def import_swisstopo_data(file_name):
     swisstopo_cursor.close()
 
 
-import_corpus('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1989_de.xml')
+#import_corpus('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de.xml')
 
 #import_swisstopo_data('/Users/lukasmeier/Programming/Facharbeit/protoype/kokos/swisstopo/geolocations.sql')
 
-import_geonames('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1989_de-ner.xml', 'SAC-Jahrbuch_1989_de.xml')
+import_geonames('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de-ner.xml', 'SAC-Jahrbuch_1969_de.xml')
 

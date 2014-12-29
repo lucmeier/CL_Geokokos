@@ -40,11 +40,17 @@
 
     <span class="scan_image"></span>
 <p>
-<span class="geoname_list">
+<form class="geoname_list" method="post" action="" onsubmit="setTimeout(function () { window.location.reload(); }, 10)">
+<fieldset>
+<legend>Geonames</legend>
 {% for geoname in geonames %}
 <div class="geoname_item" id="{{ geoname.2 }}" type="{{ geoname.0 }}">{{ geoname.3 }}</div>
+    <div> <input type="checkbox" name="{{ geoname.0 }}_{{ geoname.2 }}" value="verify" {{ geoname.4 }}> <input type="checkbox" name="{{ geoname.0 }}_{{ geoname.2 }}" value="delete"></div>
 {% endfor %}
-</span>
+<input type="submit" name="checkboxes" method="post" value="abschicken">
+</fieldset>
+    {% csrf_token %}
+</form>
 </p>
 
 {% endspaceless %}

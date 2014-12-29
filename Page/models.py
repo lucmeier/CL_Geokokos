@@ -1,7 +1,6 @@
 from django.db import models
 from django.core import exceptions
-# Create your models here.
-
+from time import sleep
 
 class Yearbook(models.Model):
     file_name = models.CharField(max_length=30)
@@ -42,7 +41,7 @@ class PageManager(models.Manager):
         return pages[0].pb_n, pages[-1].pb_n
 
     def spans_list(self):
-        '''Returns a list of div elements containing (token, attribute) tuples for a given page.'''
+        '''Returns a list of span elements containing three element (token content, token type, token/geoname id) tuples for a given page.'''
         pg = self.page
         tokens = Token.objects.all().filter(page=pg)
         layoutElements = LayoutElement.objects.all().filter(tokens=tokens)
@@ -115,22 +114,63 @@ class PageManager(models.Manager):
                 sentence.append(token.spaced_token())
         return ''.join(sentence)
 
+
+    def process_checkboxes(self, verify_or_delete, unverify):
+        '''Writes user changes into database and returns updated geonames.'''
+        for task in verify_or_delete:
+            _id = task[0].split('_')[1]
+            if task[0].startswith('GN'):
+                geoname= GeoName.objects.all().filter(id=_id)[0]
+                if task[1] == 'delete':
+                    geoname.validation_state = 'del'
+                if task[1] == 'verify':
+                    geoname.validation_state = 'verif'
+                geoname.save()
+            if task[0].startswith('UNKN') or task[0].startswith('AMBG'):
+                geoname_unclear = GeoNameUnclear.objects.all().filter(id=_id)[0]
+                if task[1] == 'delete':
+                    geoname_unclear.validation_state = 'del'
+                if task[1] == 'verify':
+                    geoname_unclear.validation_state = 'verif'
+                geoname_unclear.save()
+        for task in unverify:
+            _id = task.split('_')[1]
+            if task.startswith('GN'):
+                geoname= GeoName.objects.all().filter(id=_id)[0]
+                geoname.validation_state = 'uned'
+                geoname.save()
+            if task.startswith('UNKN') or task.startswith('AMBG'):
+                geoname_unclear = GeoNameUnclear.objects.all().filter(id=_id)[0]
+                geoname_unclear.validation_state = 'uned'
+                geoname_unclear.save()
+
     def get_geonames(self):
         '''Returns  list of (unclear and clear) geonames  in page. Each item is a
-        (type, sort_id, id, name) tuple. id depends on type.
+        (type, sort_id, id, name, verified['checked'|'']) tuple. id depends on type.
         gn: geoname.id/ unkn|ambg: unclear_geoname_id.
         Name is lemma name for gn type and name as in token(s) for ambg or unkn type.'''
         clear_unclear_geonames = list()
         for clear_geoname in self.geonames:
+            if clear_geoname.validation_state == 'del':
+                continue
             sort_id = clear_geoname.tokens.all()[0].id
-            clear_unclear_geonames.append(('GN', sort_id, clear_geoname.id, clear_geoname.geolocation.name))
+            clear_geoname_verified = str()
+            if clear_geoname.validation_state == 'verif':
+                clear_geoname_verified = 'checked='
+            clear_unclear_geonames.append(('GN', sort_id, clear_geoname.id, clear_geoname.geolocation.name, clear_geoname_verified))
         for unclear_geoname in self.unclear_geonames:
+            if unclear_geoname.validation_state == 'del':
+                continue
             sort_id = unclear_geoname.tokens.all()[0].id
             token_content = list()
             for token in unclear_geoname.tokens.all():
                 token_content.append(token.content)
             token_content = ' '.join(token_content)
-            clear_unclear_geonames.append((unclear_geoname.type, sort_id, unclear_geoname.id, token_content))
+            unclear_geoname_verified = str()
+            if unclear_geoname.validation_state == 'verif':
+                unclear_geoname_verified = 'checked='
+            clear_unclear_geonames.append((unclear_geoname.type, sort_id, unclear_geoname.id, token_content, unclear_geoname_verified))
+        print (sorted(list(set(clear_unclear_geonames)), key=lambda srt : srt[1]))
         return sorted(list(set(clear_unclear_geonames)), key=lambda srt : srt[1])
 
 
@@ -198,8 +238,9 @@ class GeoLocation(models.Model):
 
 class GeoName(models.Model):
     tokens = models.ManyToManyField(Token)  # By what token(s) this GeoName is represented
-    validation_state = models.CharField(max_length=10)
+    validation_state = models.CharField(max_length=5, choices=(('uned', 'unedited'), ('verif', 'verified'), ('del', 'deleted')), default='uned')
     geolocation = models.ForeignKey(GeoLocation)  # GeoLocation that is represented in this GeoName
+    user_notes = models.TextField(max_length=500, blank=True, default='')
 
     def __str__(self):
         return self.geolocation.name
@@ -216,6 +257,8 @@ class GeoNameUnclear(models.Model):
     '''
     tokens = models.ManyToManyField(Token)
     type = models.CharField(max_length=4, choices=(('UNKN', 'unknown'), ('AMBG', 'ambiguous')))
+    validation_state = models.CharField(max_length=5, choices=(('uned', 'unedited'), ('verif', 'verified'), ('del', 'deleted')), default='uned')
+
     user_notes = models.TextField(max_length=500, blank=True, default='')
 
     def __str__(self):
