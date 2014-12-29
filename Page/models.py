@@ -1,6 +1,6 @@
 from django.db import models
 from django.core import exceptions
-from time import sleep
+import json
 
 class Yearbook(models.Model):
     file_name = models.CharField(max_length=30)
@@ -170,9 +170,39 @@ class PageManager(models.Manager):
             if unclear_geoname.validation_state == 'verif':
                 unclear_geoname_verified = 'checked='
             clear_unclear_geonames.append((unclear_geoname.type, sort_id, unclear_geoname.id, token_content, unclear_geoname_verified))
-        print (sorted(list(set(clear_unclear_geonames)), key=lambda srt : srt[1]))
         return sorted(list(set(clear_unclear_geonames)), key=lambda srt : srt[1])
 
+    def get_coordinates(self):
+        '''Returns a list of (geoname.geolocation.name, geoname.geolocation.type, coordinates) tuples for page.'''
+        coordinates = list()
+        for geoname in self.geonames:
+            longitude = geoname.geolocation.coordinates.all().get(type='WGS').longitude
+            latitude = geoname.geolocation.coordinates.all().get(type='WGS').latitude
+            coordinates.append((geoname.geolocation.name,geoname.geolocation.type, (longitude, latitude)))
+        return coordinates
+
+    def get_coordinates_java_script_array(self):
+        '''Returns a '''
+        js_list = list()
+        for entry in self.get_coordinates():
+            js_dict = dict()
+            js_dict['name'] = entry[0]
+            js_dict['longitude'] = str(entry[2][0])
+            js_dict['latitude'] = str(entry[2][1])
+            js_list.append(js_dict)
+        return json.dumps(js_list)
+
+    def get_centroid(self):
+        '''Returns averaged center of map (needed for rendering map in a reasonable fashion.'''
+        if len(self.get_coordinates()) == 0:
+            return(46.799558, 8.235897) #geographic centre of Switzerland
+        latitude = 0
+        longitude = 0
+        coordinates = [coordinate_pair[2] for coordinate_pair in self.get_coordinates()]
+        for coordinate_pair in coordinates:
+            latitude += coordinate_pair[0]
+            longitude += coordinate_pair[1]
+        return (float(longitude/len(coordinates)), float(latitude/ len(coordinates)))
 
 class Token(models.Model):
     content = models.CharField(max_length=200)  # what the token contains

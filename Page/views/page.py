@@ -37,15 +37,13 @@ def main(request, yrb, facs_no):
         print ('verify or delete', verify_or_delete, '\n', 'unverivy', unverify)
         pageManager.process_checkboxes(verify_or_delete, unverify)
     updated_geonames = pageManager.get_geonames()
-    print (updated_geonames)
-
+    print (pageManager.get_coordinates_java_script_array())
     #processing the tokens should be done here rather than at the template level, the fewer for loops etc in the template the better.
     #Templates should only display content that has  a l r e a d y  been processed. Better still, the processing should be done in a model manager.
     return render_to_response('Page/templates/page.html', {'facs_no' : facs_no, 'yearbook' : yrb, 'divs': spans, 'previous_following' : previous_following_page,
                                                         'first_last' : first_last_page, 'correctForm' : markAsCorrectForm, 'correctFormValue' : box_checked,
-                                                        'geonames' : updated_geonames}, context_instance=RequestContext(request))
+                                                        'geonames' : updated_geonames, 'centre' : pageManager.get_centroid(),
+                                                        'coordinates_array' : pageManager.get_coordinates_java_script_array()},
+                              context_instance=RequestContext(request))
 
-
-def success(request):
-    return render_to_response('Page/templates/success.html', {'redirect' : request.get_full_path().split('/success')[0]}, context_instance=RequestContext(request))
 
