@@ -13,3 +13,9 @@ span.unkn {
 span.ambg {
     color : red
 }
+
+ html, body, #map-canvas {
+            height: 100%;
+            margin: 40;
+            padding: 0
+        }

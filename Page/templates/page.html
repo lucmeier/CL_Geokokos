@@ -6,16 +6,16 @@
     <meta charset="UTF-8">
     <title>View Page {{ facs_no }} of Yearbook {{ yearbook }}</title>
 
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=yes">
         <meta charset="utf-8">
-        <style>
-         html, body, #map-canvas {
-            height: 100%;
-            margin: 40;
-            padding: 0
-        }
-    </style>
+
     <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDV7szyDn-uZEby8T76G79x6piRg7UciWQ&sensor=true"></script>
+    <script src="{{ STATIC_URL }}js/dropdowncontent.js">
+        /***********************************************
+        * Drop Down/ Overlapping Content- © Dynamic Drive (www.dynamicdrive.com)
+        * This notice must stay intact for legal use.
+        * Visit http://www.dynamicdrive.com/ for full source code
+        ***********************************************/
+    </script>
     <script>
     function initialize() {
     var map = new google.maps.Map(document.getElementById('map-canvas'), {
@@ -61,14 +61,30 @@
     <div>
         {% for token in div %}
             {% if token.0 == 'gn' %}
-                <span class="gn" id="{{ token.1 }}">{{ token.2 }}</span>
+                <span class="gn" href="#" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
+
+
+
             {%  elif token.0 == 'unkn' %}
-                <span class="unkn" id="{{ token.1 }}">{{ token.2 }}</span>
+                <span class="unkn" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
             {% elif token.0 == 'ambg' %}
-                <span class="ambg" id="{{ token.1 }}">{{ token.2 }}</span>
+                <span class="ambg" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
             {% else %}
-                <span class="token" id="{{ token.1 }}">{{ token.2 }}</span>
+                <span class="token" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
             {% endif %}
+              <div id="subcontent" style="position:absolute; visibility: hidden; border: 9px solid orange; background-color: white; width: 300px; padding: 8px;">
+
+                <p><b>Sie möchten ...</b></p>
+                <div><a href="#">verifizieren</a></div>
+                  <div><a href="#">löschen</a></div>
+                  <div><a href="#">ändern</a></div>
+                <div align="right"><a href="javascript:dropdowncontent.hidediv('subcontent')">Menü schliessen</a></div>
+                </div>
+                <script>
+                //Call dropdowncontent.init("anchorID", "positionString", glideduration, "revealBehavior") at the end of the page:
+                dropdowncontent.init("{{ token.1 }}", "right-bottom", 500, "mouseover")
+                dropdowncontent.init("contentlink", "left-top", 300, "click")
+                </script>
         {% endfor %}
     </div>
 {% endfor %}
