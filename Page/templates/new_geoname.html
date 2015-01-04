@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<h1>
+    Kontext
+</h1>
+<p class="context">
+    {% for token in context %}
+        {% if token.0 == 'b' %}
+            <b>{{ token.1 }}</b>
+        {% else %}
+            {{ token.1 }}
+        {% endif %}
+    {% endfor %}
+</p>
+</body>
+</html>

@@ -20,8 +20,31 @@ class Page(models.Model):
         return self.yearbook.file_name + ': Page ' + str(self.pb_n)
 
 
+class NewGeoNameManager(models.Manager):
+    '''Provides methods to create new geonames.'''
+
+    def __init__(self, token_ids):
+        self.token_ids = token_ids
+
+    def get_context(self):
+        '''Returns sentence containing geoName that is about to be created.'''
+        context = list()
+        pg = Page.objects.get(id=Token.objects.get(id=self.token_ids[0]).page.id)
+        sentence_no = '-'.join(Token.objects.get(id=self.token_ids[0]).tb_key.split('-')[:2])
+        tks = Token.objects.all().filter(tb_key__startswith=sentence_no, page=pg)
+        before = str()
+        for tk in tks:
+            if tk.id in self.token_ids:
+                context.append(('b', tk.spaced_token(before)))
+            else:
+                context.append(('', tk.spaced_token(before)))
+            before = tk.content
+        return context
+
+
+
 class PageManager(models.Manager):
-    '''Contains methods that are needed to display pages.'''
+    '''Provides methods that are needed to display pages.'''
 
     def __init__(self, yrb, facs_no):
         self.facs_no = int(facs_no)
@@ -182,7 +205,7 @@ class PageManager(models.Manager):
         return coordinates
 
     def get_coordinates_java_script_array(self):
-        '''Returns a '''
+        '''Returns a list of python dictionaries as js array.'''
         js_list = list()
         colour = {'MC' : 'pink', 'MO' : 'red', 'MS' : 'green', 'LK' : 'blue', 'PL' : 'green', 'GL' : 'pink', 'VL' : 'pink'}
         for entry in self.get_coordinates():

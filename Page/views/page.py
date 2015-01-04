@@ -1,7 +1,7 @@
 __author__ = 'lukasmeier'
 
-from django.shortcuts import render_to_response, RequestContext, redirect
-from .forms import MarkAsCorrectForm
+from django.shortcuts import render_to_response, RequestContext, render
+from .forms import MarkAsCorrectForm, VerifyGeoNameForm
 
 import Page
 import Page.models
@@ -34,15 +34,29 @@ def main(request, yrb, facs_no):
             unverify = [(geoname[0] + '_' + str(geoname[2])) for geoname in geonames if len(verify_or_delete) > 0 and (geoname[0] + '_' + str(geoname[2])) not in verify_or_delete_ids]
         else:
             unverify = [(geoname[0] + '_' + str(geoname[2])) for geoname in geonames]
-        print ('verify or delete', verify_or_delete, '\n', 'unverivy', unverify)
         pageManager.process_checkboxes(verify_or_delete, unverify)
     updated_geonames = pageManager.get_geonames()
+    verify_geoname_forms = dict()
+    for geoname in updated_geonames:
+        checked = geoname[4] == 'checked='
+        geoname_id = geoname[0] + '_' + str(geoname[2])
+        verify_geoname_forms[geoname_id] = (VerifyGeoNameForm(geoname_id, checked))
     #processing the tokens should be done here rather than at the template level, the fewer for loops etc in the template the better.
     #Templates should only display content that has  a l r e a d y  been processed. Better still, the processing should be done in a model manager.
     return render_to_response('Page/templates/page.html', {'facs_no' : facs_no, 'yearbook' : yrb, 'divs': spans, 'previous_following' : previous_following_page,
                                                         'first_last' : first_last_page, 'correctForm' : markAsCorrectForm, 'correctFormValue' : box_checked,
                                                         'geonames' : updated_geonames, 'centre' : pageManager.get_centroid(),
-                                                        'coordinates_array' : pageManager.get_coordinates_java_script_array(), 'dropdown_content_path' : DROPDOWN_CONTENT_PATH},
+                                                        'coordinates_array' : pageManager.get_coordinates_java_script_array(), 'dropdown_content_path' : 'static/js/dropdowncontent.js'},
                               context_instance=RequestContext(request))
 
-DROPDOWN_CONTENT_PATH = 'static/js/dropdowncontent.js'
+
+
+def new_geoName(request):
+    context_ids = list()
+    for entry in request.GET.lists():
+        for e in entry:
+            if e == 'selection' or e == 'selection[]':
+               context_ids =  [int(token_id.split('_')[1]) for token_id in entry[1]]
+    newGeoNameManager = Page.models.NewGeoNameManager(context_ids)
+    context =  newGeoNameManager.get_context()
+    return render(request, 'Page/templates/new_geoname.html', {'context_ids' : context_ids, 'context' : context}, context_instance=RequestContext(request))

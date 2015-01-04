@@ -2,110 +2,178 @@
 {% load staticfiles %}
 
 <html>
-<head lang="en">
+<head>
     <meta charset="UTF-8">
     <title>View Page {{ facs_no }} of Yearbook {{ yearbook }}</title>
-
-        <meta charset="utf-8">
-
+    <link href="{{ STATIC_URL }}css/style.css" rel="stylesheet" type="text/css"/>
     <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDV7szyDn-uZEby8T76G79x6piRg7UciWQ&sensor=true"></script>
     <script src="{{ STATIC_URL }}js/dropdowncontent.js">
-        /***********************************************
-        * Drop Down/ Overlapping Content- © Dynamic Drive (www.dynamicdrive.com)
-        * This notice must stay intact for legal use.
-        * Visit http://www.dynamicdrive.com/ for full source code
-        ***********************************************/
+        ***********************************************
+         * Drop Down/ Overlapping Content- © Dynamic Drive (www.dynamicdrive.com)
+         * This notice must stay intact for legal use.
+         * Visit http://www.dynamicdrive.com/ for full source code
+         ***********************************************
     </script>
     <script>
-    function initialize() {
-    var map = new google.maps.Map(document.getElementById('map-canvas'), {
-      zoom: 8,
-    center: new google.maps.LatLng({{ centre.0 | floatformat}}, {{ centre.1 | stringformat:"f"}}),
-               disableDefaultUI: true,
-      mapTypeId: google.maps.MapTypeId.TERRAIN
-  });
-  var coordinates_array =
-  {{ coordinates_array | safe }}
-    for (var i = 0; i < coordinates_array.length; i++) {
-        var marker = coordinates_array[i]
-        new google.maps.Marker({
-            position: new google.maps.LatLng(marker.latitude, marker.longitude),
-            map : map,
-            title : marker.name,
-            icon : 'http://maps.google.com/mapfiles/ms/icons/'.concat(marker.colour).concat('-dot.png')
-        });
-    }
-    }
-    google.maps.event.addDomListener(window, 'load', initialize);
+        function initialize() {
+            var map = new google.maps.Map(document.getElementById('map-canvas'), {
+                zoom: 8,
+                center: new google.maps.LatLng({{ centre.0 | floatformat}}, {{ centre.1 | stringformat:"f"}}),
+                disableDefaultUI: true,
+                mapTypeId: google.maps.MapTypeId.TERRAIN
+            });
+            var coordinates_array =
+            {{ coordinates_array | safe }}
+            for (var i = 0; i < coordinates_array.length; i++) {
+                var marker = coordinates_array[i]
+                new google.maps.Marker({
+                    position: new google.maps.LatLng(marker.latitude, marker.longitude),
+                    map : map,
+                    title : marker.name,
+                    icon : 'http://maps.google.com/mapfiles/ms/icons/'.concat(marker.colour).concat('-dot.png')
+                });
+            }
+        }
+        google.maps.event.addDomListener(window, 'load', initialize);
 
     </script>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.1.min.js"></script>
+    <script src="http://rangy.googlecode.com/svn/trunk/currentrelease/rangy-core.js"></script>
+    <script>
+            <!--source: http://jsfiddle.net/KC48j/11/-->
+$(document).ready(function(){
+    var getAllBetween = function (firstEl,lastEl) {
+        var firstElement = $(firstEl); // First Element
+        var lastElement = $(lastEl); // Last Element
+        var collection = new Array(); // Collection of Elements
+        collection.push(firstElement.attr('id')); // Add First Element to Collection
+        $(firstEl).nextAll().each(function(){ // Traverse all siblings
+            var siblingID  = $(this).attr('id'); // Get Sibling ID
+            if (siblingID != $(lastElement).attr('id')) { // If Sib is not LastElement
+                collection.push($(this).attr('id')); // Add Sibling to Collection
+            } else { // Else, if Sib is LastElement
+                collection.push(lastElement.attr('id')); // Add Last Element to Collection
+                return false; // Break Loop
+            }
+        });
+        return collection; // Return Collection
+    }
 
+    $('#getSelectedSpans').click(function(event){
+        event.preventDefault();
+        if (window.getSelection) { // non-IE
+            userSelection = window.getSelection();
+            rangeObject = userSelection.getRangeAt(0);
+            if (rangeObject.startContainer == rangeObject.endContainer) {
+                selection = rangeObject.startContainer.parentNode.id;
+            } else {
+                selection = getAllBetween(
+                    rangeObject.startContainer.parentNode,
+                    rangeObject.endContainer.parentNode);
+            }
+        } else if (document.selection) { // IE lesser
+            userSelection = document.selection.createRange();
+            var ids = new Array();
+
+            if (userSelection.htmlText.toLowerCase().indexOf('span') >= 0) {
+                $(userSelection.htmlText).filter('span').each(function(index, span) {
+                    ids.push(span.id);
+                });
+                selection = ids;
+            } else {
+                selection = userSelection.parentElement().id;
+            }
+        }
+        if (typeof selection !== 'undefined') {
+            $.ajax({
+              type: "get",
+              url: "new_geoname/",
+              data: { selection: selection, csrfmiddlewaretoken: "{{ csrf_token }}",}
+            })
+            .done(function( msg ) {
+                window.location = $(this)[0].url;
+              //alert( "Data Saved: " + msg );
+              //Da meh JavaScript Logik zum d'Liste mit GeoNames vom Server aktualisiere
+
+              console.log("Data Saved: ", msg );
+            })
+            .fail(function( jqXHR, textStatus ) {
+              //alert( "Request failed: " + textStatus );
+              console.log("Request failed: ", textStatus);
+            });
+        }
+    });
+});
+    </script>
 </head>
 
 <body>
-<link href="{{ STATIC_URL }}css/style.css" rel="stylesheet" type="text/css"/>
 {% spaceless %}
-    <a class="previous" href="{% url 'page_view' yearbook previous_following.0 %}"><</a><span>  </span>
+    <a class="previous" href="{% url 'page_view' yearbook previous_following.0 %}">&lt;</a><span>  </span>
     <a class="following" href="{% url 'page_view' yearbook previous_following.1 %}">></a>
     <span>
-<a class="first_page" href="{% url 'page_view' yearbook first_last.0 %}"><<</a><span>  </span> <a class="last_page"
+<a class="first_page" href="{% url 'page_view' yearbook first_last.0 %}">&lt;&lt;</a><span>  </span> <a class="last_page"
                                                                                                   href="{% url 'page_view' yearbook first_last.1 %}">>></a>
     </span>
-   <form class="correct_form" action="" method="post">
-       {{ correctForm.as_p }}
-    {% csrf_token %}
-   </form>
+    <form class="correct_form" action="" method="post">
+        {{ correctForm.as_p }}
+        {% csrf_token %}
+    </form>
 
     <span class="page_content">
 {% for div in divs %}
     <div>
         {% for token in div %}
-            {% if token.0 == 'gn' %}
-                <span class="gn" href="#" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
+            {% if token.0 == 'gn' or token.0 == 'ambg' or token.0 == 'unkn'%}
+                {% if token.0 == 'gn' %}
+                    <span class="gn" href="#" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
 
+                {%  elif token.0 == 'unkn' %}
+                    <span class="unkn" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
+                {% elif token.0 == 'ambg' %}
+                    <span class="ambg" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
 
+                {% endif %}
+                <div id="subcontent" style="position:absolute; visibility: hidden; border: 9px solid orange; background-color: white; width: 300px; padding: 8px;">
+                    <p><b>Sie möchten ...</b></p>
+                    <div><form class="verify" method="post" action="" onsubmit="setTimeout(function () { window.location.reload(); }, 10)"><input type="submit" value="verifizieren" name="{{ token.0 }}_{{ token.1 }}"/>{% csrf_token %}
+</form></div>
+                    <div><a href="#">löschen</a></div>
+                    <div><a href="#">ändern</a></div>
+                    <div align="right"><a href="javascript:dropdowncontent.hidediv('subcontent')">Menü schliessen</a></div>
 
-            {%  elif token.0 == 'unkn' %}
-                <span class="unkn" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
-            {% elif token.0 == 'ambg' %}
-                <span class="ambg" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
-            {% else %}
-                <span class="token" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
-            {% endif %}
-              <div id="subcontent" style="position:absolute; visibility: hidden; border: 9px solid orange; background-color: white; width: 300px; padding: 8px;">
-
-                <p><b>Sie möchten ...</b></p>
-                <div><a href="#">verifizieren</a></div>
-                  <div><a href="#">löschen</a></div>
-                  <div><a href="#">ändern</a></div>
-                <div align="right"><a href="javascript:dropdowncontent.hidediv('subcontent')">Menü schliessen</a></div>
                 </div>
                 <script>
-                //Call dropdowncontent.init("anchorID", "positionString", glideduration, "revealBehavior") at the end of the page:
-                dropdowncontent.init("{{ token.1 }}", "right-bottom", 500, "mouseover")
-                dropdowncontent.init("contentlink", "left-top", 300, "click")
+                    //Call dropdowncontent.init("anchorID", "positionString", glideduration, "revealBehavior") at the end of the page:
+                    dropdowncontent.init("{{ token.1 }}", "right-bottom", 500, "mouseover")
+                    dropdowncontent.init("contentlink", "left-top", 300, "click")
                 </script>
+            {% else %}
+                <span class="token" id="t_{{ token.1 }}">{{ token.2 }}</span>
+            {% endif %}
         {% endfor %}
     </div>
 {% endfor %}
+
 </span>
-
+  <form class="new_geoname" method="post" action="new_geoname"/>
+        <input type="submit" id="getSelectedSpans" value="Neuen GeoName erstellen" name="new_geoname"/>
+    </form>
     <span class="scan_image"></span>
-<p>
-<form class="geoname_list" method="post" action="" onsubmit="setTimeout(function () { window.location.reload(); }, 10)">
-<fieldset>
-<legend>Geonames</legend>
-{% for geoname in geonames %}
-<div class="geoname_item" id="{{ geoname.2 }}" type="{{ geoname.0 }}">{{ geoname.3 }}</div>
-    <div> <input type="checkbox" name="{{ geoname.0 }}_{{ geoname.2 }}" value="verify" {{ geoname.4 }}> <input type="checkbox" name="{{ geoname.0 }}_{{ geoname.2 }}" value="delete"></div>
-{% endfor %}
-<input type="submit" name="checkboxes" method="post" value="abschicken">
-</fieldset>
-    {% csrf_token %}
-</form>
-</p>
+    <p>
+    <form class="geoname_list" method="post" action="" onsubmit="setTimeout(function () { window.location.reload(); }, 10)">
+        <fieldset>
+            <legend>Geonames</legend>
+            {% for geoname in geonames %}
+                <div class="geoname_item" id="{{ geoname.2 }}" type="{{ geoname.0 }}">{{ geoname.3 }}</div>
+                <div> <input type="checkbox" name="{{ geoname.0 }}_{{ geoname.2 }}" value="verify" {{ geoname.4 }}> <input type="checkbox" name="{{ geoname.0 }}_{{ geoname.2 }}" value="delete"></div>
+            {% endfor %}
+            <input type="submit" name="checkboxes" method="post" value="abschicken">
+        </fieldset>
+        {% csrf_token %}
+    </form>
 
- <div id="map-canvas"></div>
+    <div id="map-canvas"></div>
 {% endspaceless %}
 </body>
 </html>
