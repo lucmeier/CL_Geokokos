@@ -29,7 +29,7 @@ class LayoutElementAdmin(admin.ModelAdmin):
     readonly_fields = ('tokens',)
 
 class GeoLocationAdmin(admin.ModelAdmin):
-    fields = ('name', 'type', 'geoloc_reference', 'coordinates')
+    fields = ('name', 'type', 'geoloc_reference', 'coordinates', 'region')
     search_fields = ('name',)
     ordering = ('name',)
     readonly_fields = ('geoloc_reference', 'coordinates')
@@ -44,6 +44,9 @@ admin.site.register(models.GeoLocation, GeoLocationAdmin)
 admin.site.register(models.GeoName, GeoNameAdmin)
 admin.site.register(models.LayoutElement, LayoutElementAdmin)
 admin.site.register(models.GeoNameUnclear, GeoNameUnclearAdmin)
+admin.site.register(models.Country)
+admin.site.register(models.Region)
+
 #admin.site.register(GeoCoordinates)
 #admin.site.register(ForeignGeoLocationId)
 

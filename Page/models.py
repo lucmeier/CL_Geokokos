@@ -1,6 +1,7 @@
 from django.db import models
 from django.core import exceptions
 import json
+import collections
 
 class Yearbook(models.Model):
     file_name = models.CharField(max_length=30)
@@ -40,6 +41,8 @@ class NewGeoNameManager(models.Manager):
                 context.append(('', tk.spaced_token(before)))
             before = tk.content
         return context
+
+
 
 
 
@@ -275,9 +278,24 @@ class GeoLocationReference(models.Model):
     def __str__(self):
         return self.type + ': ' + self.value
 
+class Country(models.Model):
+    abbreviation = models.CharField(max_length=10)
+    full_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.abbreviation + ': ' + self.full_name
+
+class Region(models.Model):
+    abbreviation = models.CharField(max_length=10, blank=True, default='')
+    full_name = models.CharField(max_length=100, blank=True)
+    country = models.ForeignKey(Country, blank=True)
+
+    def __str__(self):
+        return self.full_name + ' (' + self.country.full_name + ')'
 
 class GeoLocation(models.Model):
     name = models.CharField(max_length=100)
+    region = models.ForeignKey(Region, blank=True)
     coordinates = models.ManyToManyField(GeoCoordinates, related_name='Coordinates')
     type = models.CharField(max_length=2, choices=(
     ('MO', 'Mountain'), ('GL', 'Glacier'), ('PL', 'Place'), ('RI', 'River'), ('LA', 'Lake'), ('VL', 'Valley'),
@@ -289,6 +307,7 @@ class GeoLocation(models.Model):
 
     class Meta:
         ordering = ['name', 'type']
+
 
 
 class GeoName(models.Model):

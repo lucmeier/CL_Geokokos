@@ -1,6 +1,8 @@
+import autocomplete_light
+autocomplete_light.autodiscover()#must be called before admin.autodiscover() or any other import
+
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
-
 
 admin.autodiscover()
 urlpatterns = patterns('',
@@ -10,5 +12,6 @@ urlpatterns = patterns('',
 
     url(r'^admin/', include(admin.site.urls)),
     url(r'kokos/(SAC.+)/(\d{1,3})/$', 'Page.views.page.main', name='page_view'),
-    url(r'kokos/SAC.+/\d{1,3}/new_geoname/', 'Page.views.page.new_geoName', name='new_geoname')
+    url(r'kokos/SAC.+/\d{1,3}/new_geoname/', 'Page.views.page.new_geoName', name='new_geoname'),
+    url(r'^autocomplete/', include('autocomplete_light.urls')),
 )

@@ -1,7 +1,7 @@
 __author__ = 'lukasmeier'
 
 from django.shortcuts import render_to_response, RequestContext, render
-from .forms import MarkAsCorrectForm, VerifyGeoNameForm
+from .forms import MarkAsCorrectForm, VerifyGeoNameForm, GeoLocationAutocomplete, OsAutocompleteForm
 
 import Page
 import Page.models
@@ -59,4 +59,4 @@ def new_geoName(request):
                context_ids =  [int(token_id.split('_')[1]) for token_id in entry[1]]
     newGeoNameManager = Page.models.NewGeoNameManager(context_ids)
     context =  newGeoNameManager.get_context()
-    return render(request, 'Page/templates/new_geoname.html', {'context_ids' : context_ids, 'context' : context}, context_instance=RequestContext(request))
+    return render(request, 'Page/templates/new_geoname.html', {'context_ids' : context_ids, 'context' : context, 'test_form' : OsAutocompleteForm()}, context_instance=RequestContext(request))
