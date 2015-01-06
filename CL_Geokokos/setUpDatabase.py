@@ -119,7 +119,7 @@ def  _process_stid(stid):
     if stid == '0':
         return (stid, 'UNKN')
     if stid.startswith('g') and stid != 'g23':
-        return (stid[1:], 'UNKN') #geonames
+        return (stid[1:], 'GN') #geonames
     if stid == 's23' or stid == 'g23' or stid == '23' or stid.startswith('cg'):
         return (stid, 'AMBG')
     if not stid.startswith('s') and not stid.startswith('g') and len(stid) == 4:
@@ -147,12 +147,17 @@ def _get_geolocation_id(stid):
     cursor = geokokos_db.cursor(buffered=True)
     stid_type = stid[1]
     if stid_type == 'ST' or stid_type == 'GN':
-        swisstopo_id = stid[0]
+        foreign_reference_id = stid[0]
+        print (foreign_reference_id)
         cursor.execute('''SELECT name, Page_geolocation.type, value, Page_geolocation.id
 FROM Page_geolocation_geoloc_reference, Page_GeoLocationReference, Page_geolocation
 WHERE Page_geolocation.id = Page_geolocation_geoloc_reference.geolocation_id
-    AND Page_geolocation_geoloc_reference.geolocationreference_id = Page_geolocationreference.id AND value = %s''', (swisstopo_id,))
-        return cursor.fetchone()[3]
+    AND Page_geolocation_geoloc_reference.geolocationreference_id = Page_geolocationreference.id AND value = %s''', (foreign_reference_id,))
+        res = cursor.fetchone()
+        if res is not None:
+            return res[3]
+        else:
+            return None
     elif stid_type == 'ZIP':
         place_name = _get_zip_codes(stid[0])
         cursor.execute("""SELECT name, Page_geolocation.type, value, Page_geolocation.id
@@ -197,7 +202,7 @@ def import_geonames(file_name, yearbook):
         stid = _process_stid(geoname.attrib['stid'])
         spannos = geoname.attrib['span'].split(', ') #one or several spannos
         token_ids = _get_token_ids(spannos, yearbook)
-        if stid[1] == 'ST' or stid[1] == 'ZIP':
+        if stid[1] == 'ST' or stid[1] == 'ZIP' or stid[1] == 'GN':
             geolocation_id = _get_geolocation_id(stid)
             if geolocation_id is not None:
                 _create_geoname(geolocation_id, token_ids)
@@ -443,9 +448,9 @@ def import_swisstopo_data(file_name):
 #import_country_codes('/Users/lukasmeier/Programming/Facharbeit/CL_Geokokos/CL_Geokokos/information_sources/country.csv')
 #fill_in_swiss_cantons()
 #import_swisstopo_data('/Users/lukasmeier/Programming/Facharbeit/geokokos_daten/swisstopo/geolocations.sql')
-import_geoname_data('/Users/lukasmeier/Programming/Facharbeit/geokokos_daten/geonames/geonames.sql')
+#import_geoname_data('/Users/lukasmeier/Programming/Facharbeit/geokokos_daten/geonames/geonames.sql')
 
 #import_corpus('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de.xml')
 
-#import_geonames('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de-ner.xml', 'SAC-Jahrbuch_1969_de.xml')
+import_geonames('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de-ner.xml', 'SAC-Jahrbuch_1969_de.xml')
 
