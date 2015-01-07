@@ -67,7 +67,7 @@ class PageManager(models.Manager):
         return pages[0].pb_n, pages[-1].pb_n
 
     def spans_list(self):
-        '''Returns a list of span elements containing three element (token content, token type, token/geoname id) tuples for a given page.'''
+        '''Returns a list of span elements containing four element (token content, token type, token/geoname id, ['checked='|'']) tuples for a given page.'''
         pg = self.page
         tokens = Token.objects.all().filter(page=pg)
         layoutElements = LayoutElement.objects.all().filter(tokens=tokens)
@@ -95,11 +95,18 @@ class PageManager(models.Manager):
             before = str()
             for tkn in div.tokens.all():
                 if tkn.id in geonames_token_ids:
-                    tkns.append(('gn', geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before)))
+                    checked = str()
+                    if geonames.all().filter(tokens = tkn)[0].validation_state == 'verif':
+                        checked = 'checked='
+                    tkns.append(('gn', geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before), checked))
                 elif tkn.id in unknown_geonames_token_ids:
-                    tkns.append(('unkn', unclear_geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before)))
+                    if unclear_geonames.all().filter(tokens = tkn)[0].validation_state == 'verif':
+                        checked = 'checked='
+                    tkns.append(('unkn', unclear_geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before), checked))
                 elif tkn.id in ambiguous_geonames_token_ids:
-                    tkns.append(('ambg', unclear_geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before)))
+                    if unclear_geonames.all().filter(tokens = tkn)[0].validation_state == 'verif':
+                        checked = 'checked='
+                    tkns.append(('ambg', unclear_geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before), checked))
                 else:
                     tkns.append(('token', tkn.id, tkn.spaced_token(before)))
                 before = tkn.content
@@ -140,6 +147,18 @@ class PageManager(models.Manager):
                 sentence.append(token.spaced_token())
         return ''.join(sentence)
 
+    def process_single_verification(self, geoname):
+        '''Processes a verification request from on mouseover pop-up box.'''
+        if geoname.startswith('ambg_') or geoname.startswith('unkn_'):
+            geoname_unclear_id = geoname.split('_')[1]
+            geoname_unclear_object = GeoNameUnclear.objects.get(geoname_unclear_id)
+            geoname_unclear_object.validation_state = 'verif'
+            geoname_unclear_object.save()
+        if geoname.startswith('gn_'):
+            geoname_id = geoname.split('_')[1]
+            geoname_object = GeoName.objects.get(id=geoname_id)
+            geoname_object.validation_state = 'verif'
+            geoname_object.save()
 
     def process_checkboxes(self, verify_or_delete, unverify):
         '''Writes user changes into database and returns updated geonames.'''
@@ -338,8 +357,10 @@ class GeoNameUnclear(models.Model):
     tokens = models.ManyToManyField(Token)
     type = models.CharField(max_length=4, choices=(('UNKN', 'unknown'), ('AMBG', 'ambiguous')))
     validation_state = models.CharField(max_length=5, choices=(('uned', 'unedited'), ('verif', 'verified'), ('del', 'deleted')), default='uned')
-
-    user_notes = models.TextField(max_length=500, blank=True, default='')
+    '''geolocation_type =  models.CharField(max_length=2, choices=(
+    ('MO', 'Mountain'), ('GL', 'Glacier'), ('PL', 'Place'), ('RI', 'River'), ('LA', 'Lake'), ('VL', 'Valley'),
+    ('MC', 'Mountain Cabin'), ('MS', 'Misc')))
+    user_notes = models.TextField(max_length=500, blank=True, default='')'''
 
     def __str__(self):
         return self.type

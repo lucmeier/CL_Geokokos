@@ -8,10 +8,13 @@ Voraussetzungen
 - Git
 - local_settings.py (aus https://pub.cl.uzh.ch:11443/lukasmeier/geokokos_daten/tree/master)
 - Text+Berg-Korpus lokal vorhanden
+- mySql-python
+- pip3 install PyMySQL
+- autocomplete_light app (pip3 install django-autocomplete-light>=2.0.0pre sollte funktionieren.)
 
 Aufsetzen
 1. https://github.com/lucmeier/CL_Geokokos klonen
-2. local_settings.py in Hauptverzeichnis kopieren (https://pub.cl.uzh.ch:11443/lukasmeier/geokokos_daten/tree/master)
+2. local_settings.py in Verzeichnis CL_Geokokos/CL_Geokokos kopieren (https://pub.cl.uzh.ch:11443/lukasmeier/geokokos_daten/tree/master)
 3. MySQL-Datenbank erstellen: CREATE SCHEMA `geokokos_db` DEFAULT CHARACTER SET utf8;
 4. manage.py syncdb ausführen. Mit diesem Schritt werden in der Datenbank die entsprechenden Tabellen angelegt. 
 5. setUpDatabase-py durchlaufen lassen (Kann einige Zeit dauern):

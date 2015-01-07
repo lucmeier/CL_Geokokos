@@ -4,10 +4,17 @@ __author__ = 'lukasmeier'
 import sqlite3
 from xml.etree import cElementTree as ET
 import mysql.connector
+import sys
 
 geokokos_db = local_setting = mysql.connector.connect(host="localhost",user="root", passwd="", db ="geokokos_db")
 
-def _get_zip_codes(zip_code, zip_code_file='information_sources/plz_l_20141117.txt'):
+def _get_place_name_from_zip(zip_code, zip_code_file='information_sources/plz_l_20141117.txt'):
+    '''
+    Returns place behind Swiss ZIP.
+    :param zip_code: Swiss ZIP code
+    :param zip_code_file: path to ZIP code text file (source: wwww.post.ch)
+    :return: Place name, 'UNKN' if lookup fails.
+    '''
     zip_codes = dict()
     with open(zip_code_file, 'r') as f:
         for line in f.readlines():
@@ -17,6 +24,11 @@ def _get_zip_codes(zip_code, zip_code_file='information_sources/plz_l_20141117.t
     return zip_codes.get(zip_code, 'UNKN')
 
 def _open_div(token_id):
+    '''
+    create div layout element in database (a div layout element contains the the token ids of a paragraph)
+    :param token_id: token.id from database
+    :return:
+    '''
     layout_element_cursor = geokokos_db.cursor()
     #insert layoutElement into database/ retrieve id
     layout_element_cursor.execute('''INSERT INTO Page_layoutelement (type) VALUES (%s)''', ('div',))
@@ -29,7 +41,11 @@ def _open_div(token_id):
     layout_element_cursor.close()
 
 def _add_token_to_div(token_id):
-    '''Adds token to last layout element that has been created'''
+    '''
+    Adds token to last layout element that has been created
+    :param token_id: token.id from database
+    :return:
+    '''
     layout_element_cursor = geokokos_db.cursor()
     layout_element_cursor.execute('''SELECT id FROM Page_layoutelement WHERE id = (SELECT MAX(id) FROM Page_layoutelement)''')
     last_layout_element_id_inserted = layout_element_cursor.fetchone()[0]
@@ -38,6 +54,11 @@ def _add_token_to_div(token_id):
     layout_element_cursor.close()
 
 def import_corpus(file_name):
+    '''
+
+    :param file_name: path to xml yearbook file
+    :return:
+    '''
     #Adding Yearbook
     print(20 * '*' + 'start adding yearbook' + 20 * '*')
     yearbook_cursor = geokokos_db.cursor()
@@ -101,8 +122,12 @@ def import_corpus(file_name):
     print(20 * '*' + 'finished adding yearbook' + 20 * '*')
 
 def _get_token_id(spanno, yearbook):
-    '''Fetch django token id given spanno and yearbook'''
-    geokokos_db =  mysql.connector.connect(host="localhost",user="root", passwd="", db ="geokokos_db")
+    '''
+    Fetch django token id
+    :param spanno: spanno as in xml yearbook file, i. e. "1-2-3"
+    :param yearbook: yearbook file name
+    :return: token.id
+    '''
     token_id_cursor = geokokos_db.cursor()
     token_id_cursor.execute('''SELECT Page_token.id FROM Page_token, Page_page, Page_yearbook
 WHERE tb_key = %s AND Page_page.id = Page_token.page_id AND Page_yearbook.id = Page_page.yearBook_id
@@ -113,7 +138,11 @@ AND Page_yearbook.file_name = %s''', (spanno, yearbook[:-4]))
         return result[0]
 
 def  _process_stid(stid):
-    '''preprocess messy stid no (all of them are messy'''
+    '''
+
+    :param stid: stid from xml-ner file, i. e. "s12444"
+    :return: (clean_stid, kind) tuple, i. e. (12444, 'ST')
+    '''
     if stid.startswith('s') and stid != 's23':
         return (stid[1:], 'ST')
     if stid == '0':
@@ -128,13 +157,19 @@ def  _process_stid(stid):
         try:
             int(stid)
         except ValueError:
+            sys.stderr.write('Could not process stid ' + stid + '. stid invalid.')
             return ('0', 'UNKN')
         return (stid, 'ST')
     else:
         return (stid, 'UNKN')
 
 def _get_token_ids(spannos, yearbook):
-    '''Returns a list containing django token ids given '''
+    '''
+
+    :param spannos: a list of spannos, i. e ['2-3-4', 2-3-5, ...]
+    :param yearbook: yearbook file name, i. e. "SAC-Jahrbuch_1969_de.xml"
+    :return: a list
+    '''
     token_ids = list()
     if spannos is not None:
         for spanno in spannos:
@@ -144,6 +179,11 @@ def _get_token_ids(spannos, yearbook):
     return token_ids
 
 def _get_geolocation_id(stid):
+    '''
+
+    :param stid: a list of (foreign_reference_id, reference_type) tuples
+    :return: geolocation.id
+    '''
     cursor = geokokos_db.cursor(buffered=True)
     stid_type = stid[1]
     if stid_type == 'ST' or stid_type == 'GN':
@@ -159,7 +199,7 @@ WHERE Page_geolocation.id = Page_geolocation_geoloc_reference.geolocation_id
         else:
             return None
     elif stid_type == 'ZIP':
-        place_name = _get_zip_codes(stid[0])
+        place_name = _get_place_name_from_zip(stid[0])
         cursor.execute("""SELECT name, Page_geolocation.type, value, Page_geolocation.id
 FROM Page_geolocation_geoloc_reference, Page_GeoLocationReference, Page_geolocation
 WHERE Page_geolocation.id = Page_geolocation_geoloc_reference.geolocation_id
@@ -171,6 +211,12 @@ WHERE Page_geolocation.id = Page_geolocation_geoloc_reference.geolocation_id
             return ret[3]
 
 def _create_geoname(geolocation_id, token_ids):
+    '''
+
+    :param geolocation_id: id of geolocation to which geoname belongs.
+    :param token_ids: a list of token ids belonging to geoname.
+    :return:
+    '''
     cursor = geokokos_db.cursor(buffered=True)
     cursor.execute('''INSERT INTO Page_geoname (geolocation_id, validation_state, user_notes)
         VALUES (%s, %s, %s)''', (geolocation_id, 'uned', ''))
@@ -184,6 +230,11 @@ def _create_geoname(geolocation_id, token_ids):
     cursor.close()
 
 def _create_geoname_unclear(type, token_ids):
+    '''
+
+    :param token_ids: a list of token ids for which a a geoname_unclear entry is inserted
+    :param type: kind of geoname_unlear entry (UNKN|AMBG)
+    '''
     cursor = geokokos_db.cursor(buffered=True)
     cursor.execute('''INSERT INTO Page_geonameunclear (type, user_notes, validation_state) VALUES (%s, %s, %s)''', (type, '', 'uned'))
     geokokos_db.commit()
@@ -195,7 +246,12 @@ def _create_geoname_unclear(type, token_ids):
     cursor.close()
 
 def import_geonames(file_name, yearbook):
-    '''import geonames for specific yearbook. '''
+    '''
+
+    :param file_name: path to ner_file.xml
+    :param yearbook: yearbook filename, i. e. "SAC-Jahrbuch_1969_de.xml"
+    :return:
+    '''
     root = ET.parse(file_name).getroot()
     print(20 * '*' + 'start adding geonames' + 20 * '*')
     for geoname in root[0]:
@@ -228,6 +284,13 @@ def import_country_codes(file_name):
 
 
 def fill_in_swiss_cantons():
+    '''
+    Writes Swiss Cantons as regions into database.
+    Swisstopo database also includes entries on foreign soil. For this reason, Austria, Italy and Liechtenstein
+    are treated as Swiss regions.
+    :precondition: import_country_codes() must have been executed before.
+    :return:
+    '''
     geokokos_cursor = geokokos_db.cursor()
     geokokos_cursor.execute('''SELECT id FROM Page_country WHERE abbreviation="CH";''')
     switzerland_id = geokokos_cursor.fetchone()[0]
@@ -246,7 +309,12 @@ def fill_in_swiss_cantons():
 
 
 def get_mapping(source):
-    '''Returns dictionary mapping each GeoLocation type (Fels, Wald, Huegel ...) from Swisstopo or other source (Fels, Wald, Huegel ...) to a TB type.'''
+    '''
+    Returns dictionary mapping each Swisstopo Geolocation type (Fels, Wald, Huegel ...) from Swisstopo
+    or other source (Fels, Wald, Huegel ...) to a Text+Berg type.
+    :param source: swisstopo|geonames|...
+    :return: Text+Berg geolocation type (mountain|mountain_cabin|lake|glacier|valley|misc)
+    '''
     mountain, glacier, lake, city, valley, mountain_cabin, misc = 'MO', 'GL', 'LA', 'PL', 'VL', 'MC', 'MS' #Text + Berg GeoTypes (Misc has been added)
     if source == 'swisstopo':
         return {
@@ -312,12 +380,16 @@ def get_mapping(source):
             'HGipfel' : mountain,
             'Staumauer' : misc
                 }
-    if source == 'geoname':
+    if source == 'geonames':
         return {
 
         }
 
 def _get_swiss_cantons():
+    '''
+
+    :return: a dictionary mapping [canton_abbreviation] --> region.id of that canton
+    '''
     geokokos_cursor = geokokos_db.cursor()
     geokokos_cursor.execute('''SELECT Page_region.id, Page_region.abbreviation FROM Page_region, Page_country WHERE country_id = Page_country.id AND
 Page_country.abbreviation = 'CH';''', )
@@ -329,6 +401,11 @@ Page_country.abbreviation = 'CH';''', )
     return cantons
 
 def _get_country_id(country_code):
+    '''
+
+    :param country_code: two-letter country code, i. e. 'DE'
+    :return: this country's database id (country.id)
+    '''
     geokokos_cursor = geokokos_db.cursor(buffered=True)
     geokokos_cursor.execute('''SELECT id FROM Page_country WHERE abbreviation=%s''', (country_code,))
     res = geokokos_cursor.fetchone()
@@ -340,6 +417,12 @@ def _get_country_id(country_code):
 
 
 def _get_region_id(region_name, country_code):
+    '''
+
+    :param region_name: region.full_name, i. e. "Zürich"
+    :param country_code: two-letter country code, i. e. "CH"
+    :return: region.id
+    '''
     geokokos_cursor = geokokos_db.cursor(buffered=True)
     geokokos_cursor.execute('''SELECT * FROM Page_region WHERE full_name=%s''', (region_name,))
     res = geokokos_cursor.fetchall()
@@ -361,6 +444,11 @@ def _get_region_id(region_name, country_code):
 
 
 def import_geoname_data(file_name):
+    '''
+    Stores Geonames in geokokos database.
+    :param file_name: path to geoname sqlite3 database
+    :return:
+    '''
     geonames_db = sqlite3.connect(file_name)
     geonames_cursor = geonames_db.cursor()
     geonames_cursor.execute('''SELECT * FROM geonames;''')
@@ -402,6 +490,11 @@ def import_geoname_data(file_name):
 
 
 def import_swisstopo_data(file_name):
+    '''
+    Stores Swisstopo data in database
+    :param file_name: path to sqlite3 Swisstopo database
+    :return:
+    '''
     swisstopo_db = sqlite3.connect(file_name)
     #Adding Swisstopo Entries
     geokokos_types = get_mapping('swisstopo')

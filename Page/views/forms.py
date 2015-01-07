@@ -14,6 +14,7 @@ class VerifyGeoNameForm(forms.Form):
 
 class GeoLocationAutocomplete(autocomplete_light.AutocompleteListTemplate):
     reg = models.Region.objects.all().filter(abbreviation='GR')
+
     choices =  [geoname.get_display_name() for geoname in models.GeoLocation.objects.all().filter(region=reg)]
 
 autocomplete_light.register(GeoLocationAutocomplete)

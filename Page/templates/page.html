@@ -124,22 +124,23 @@ $(document).ready(function(){
         {% for token in div %}
             {% if token.0 == 'gn' or token.0 == 'ambg' or token.0 == 'unkn'%}
                 {% if token.0 == 'gn' %}
-                    <span class="gn" href="#" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
+                    <span class="gn" href="#" id="{{ token.1 }}" rel="subcontent_{{ token.1 }}">{{ token.2 }}</span>
 
                 {%  elif token.0 == 'unkn' %}
-                    <span class="unkn" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
+                    <span class="unkn" id="{{ token.1 }}" rel="subcontent_{{ token.1 }}">{{ token.2 }}</span>
                 {% elif token.0 == 'ambg' %}
-                    <span class="ambg" id="{{ token.1 }}" rel="subcontent">{{ token.2 }}</span>
+                    <span class="ambg" id="{{ token.1 }}" rel="subcontent_{{ token.1 }}">{{ token.2 }}</span>
 
                 {% endif %}
-                <div id="subcontent" style="position:absolute; visibility: hidden; border: 9px solid orange; background-color: white; width: 300px; padding: 8px;">
+                <div id="subcontent_{{ token.1 }}" style="position:absolute; visibility: hidden; border: 9px solid orange; background-color: white; width: 300px; padding: 8px;">
                     <p><b>Sie möchten ...</b></p>
-                    <div><form class="verify" method="post" action="" onsubmit="setTimeout(function () { window.location.reload(); }, 10)">
-                        {{ verify_geoname_form }}{% csrf_token %}
+                    <div><form class="single_geoname" method="post" action="" onsubmit="setTimeout(function () { window.location.reload(); }, 10)">
+
+                        <input type="checkbox" name="{{ token.0 }}_{{ token.1 }}" value='verify' onclick="submit();" {{ token.3 }}> verifiziert{% csrf_token %}
                     </form></div>
                     <div><a href="#">löschen</a></div>
                     <div><a href="#">ändern</a></div>
-                    <div align="right"><a href="javascript:dropdowncontent.hidediv('subcontent')">Menü schliessen</a></div>
+                    <div align="right"><a href="javascript:dropdowncontent.hidediv('subcontent_{{ token.1 }}')">Menü schliessen</a></div>
 
                 </div>
                 <script>
@@ -160,7 +161,7 @@ $(document).ready(function(){
     </form>
     <span class="scan_image"></span>
     <p>
-    <form class="geoname_list" method="post" action="" onsubmit="setTimeout(function () { window.location.reload(); }, 10)">
+    <form class="geoname_list" method="post" action="" onsubmit="setTimeout(function () { window.location.reload(); }, 1000)">
         <fieldset>
             <legend>Geonames</legend>
             {% for geoname in geonames %}
