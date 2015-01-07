@@ -3,15 +3,15 @@ body {
 }
 
 span.gn {
-    color: blue;
+    background: green;
 }
 
 span.unkn {
-    color : green;
+    background : lightgray;
 }
 
 span.ambg {
-    color : red
+    background : red
 }
 
  html, body, #map-canvas {

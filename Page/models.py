@@ -305,6 +305,12 @@ class GeoLocation(models.Model):
     def __str__(self):
         return self.name + ' (' + self.type + ')'
 
+    def get_display_name(self):
+        if self.region.country.abbreviation != 'CH':
+            return self.name + ' ('  + self.region.country.abbreviation + ')'
+        else:
+            return self.name + ' ('  + self.region.abbreviation + ')'
+
     class Meta:
         ordering = ['name', 'type']
 

@@ -92,8 +92,6 @@ $(document).ready(function(){
             })
             .done(function( msg ) {
                 window.location = $(this)[0].url;
-              //alert( "Data Saved: " + msg );
-              //Da meh JavaScript Logik zum d'Liste mit GeoNames vom Server aktualisiere
 
               console.log("Data Saved: ", msg );
             })
@@ -136,8 +134,9 @@ $(document).ready(function(){
                 {% endif %}
                 <div id="subcontent" style="position:absolute; visibility: hidden; border: 9px solid orange; background-color: white; width: 300px; padding: 8px;">
                     <p><b>Sie möchten ...</b></p>
-                    <div><form class="verify" method="post" action="" onsubmit="setTimeout(function () { window.location.reload(); }, 10)"><input type="submit" value="verifizieren" name="{{ token.0 }}_{{ token.1 }}"/>{% csrf_token %}
-</form></div>
+                    <div><form class="verify" method="post" action="" onsubmit="setTimeout(function () { window.location.reload(); }, 10)">
+                        {{ verify_geoname_form }}{% csrf_token %}
+                    </form></div>
                     <div><a href="#">löschen</a></div>
                     <div><a href="#">ändern</a></div>
                     <div align="right"><a href="javascript:dropdowncontent.hidediv('subcontent')">Menü schliessen</a></div>
@@ -165,7 +164,7 @@ $(document).ready(function(){
         <fieldset>
             <legend>Geonames</legend>
             {% for geoname in geonames %}
-                <div class="geoname_item" id="{{ geoname.2 }}" type="{{ geoname.0 }}">{{ geoname.3 }}</div>
+                <div class="geoname_item" id="{{ geoname.1 }}_{{ geoname.2 }}" type="{{ geoname.0 }}">{{ geoname.3 }}</div>
                 <div> <input type="checkbox" name="{{ geoname.0 }}_{{ geoname.2 }}" value="verify" {{ geoname.4 }}> <input type="checkbox" name="{{ geoname.0 }}_{{ geoname.2 }}" value="delete"></div>
             {% endfor %}
             <input type="submit" name="checkboxes" method="post" value="abschicken">

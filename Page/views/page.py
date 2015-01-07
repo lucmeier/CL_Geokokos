@@ -1,12 +1,13 @@
 __author__ = 'lukasmeier'
 
 from django.shortcuts import render_to_response, RequestContext, render
-from .forms import MarkAsCorrectForm, VerifyGeoNameForm, GeoLocationAutocomplete, OsAutocompleteForm
+from .forms import MarkAsCorrectForm, VerifyGeoNameForm, GeoLocationForm
 
 import Page
 import Page.models
 
 def main(request, yrb, facs_no):
+    print (request.POST)
     pageManager = Page.models.PageManager(yrb, facs_no)
     pg = pageManager.page
     #mark as correct form
@@ -36,14 +37,9 @@ def main(request, yrb, facs_no):
             unverify = [(geoname[0] + '_' + str(geoname[2])) for geoname in geonames]
         pageManager.process_checkboxes(verify_or_delete, unverify)
     updated_geonames = pageManager.get_geonames()
-    verify_geoname_forms = dict()
-    for geoname in updated_geonames:
-        checked = geoname[4] == 'checked='
-        geoname_id = geoname[0] + '_' + str(geoname[2])
-        verify_geoname_forms[geoname_id] = (VerifyGeoNameForm(geoname_id, checked))
     #processing the tokens should be done here rather than at the template level, the fewer for loops etc in the template the better.
     #Templates should only display content that has  a l r e a d y  been processed. Better still, the processing should be done in a model manager.
-    return render_to_response('Page/templates/page.html', {'facs_no' : facs_no, 'yearbook' : yrb, 'divs': spans, 'previous_following' : previous_following_page,
+    return render_to_response('Page/templates/page.html', {'verify_geoname_form' : VerifyGeoNameForm(), 'facs_no' : facs_no, 'yearbook' : yrb, 'divs': spans, 'previous_following' : previous_following_page,
                                                         'first_last' : first_last_page, 'correctForm' : markAsCorrectForm, 'correctFormValue' : box_checked,
                                                         'geonames' : updated_geonames, 'centre' : pageManager.get_centroid(),
                                                         'coordinates_array' : pageManager.get_coordinates_java_script_array(), 'dropdown_content_path' : 'static/js/dropdowncontent.js'},
@@ -59,4 +55,5 @@ def new_geoName(request):
                context_ids =  [int(token_id.split('_')[1]) for token_id in entry[1]]
     newGeoNameManager = Page.models.NewGeoNameManager(context_ids)
     context =  newGeoNameManager.get_context()
-    return render(request, 'Page/templates/new_geoname.html', {'context_ids' : context_ids, 'context' : context, 'test_form' : OsAutocompleteForm()}, context_instance=RequestContext(request))
+    print (request.POST)
+    return render(request, 'Page/templates/new_geoname.html', {'context_ids' : context_ids, 'context' : context, 'test_form' : GeoLocationForm()}, context_instance=RequestContext(request))

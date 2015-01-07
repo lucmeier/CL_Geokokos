@@ -9,27 +9,20 @@ class MarkAsCorrectForm(forms.Form):
 
 class VerifyGeoNameForm(forms.Form):
     '''to verify a single GeoName via pop up-box'''
-    def __init__(self, id, checked):
-        self.checked = checked
-        self.id = id # e. g. "GN_212"
-        self.verified = forms.BooleanField(widget=forms.CheckboxInput(attrs={'onclick' : 'submit();'}), required=False, label="verifiziert")
-
-class ChooseGeoLocationForm(forms.Form):
-    '''To choose approriate geolocation'''
-    pass
+    verified = forms.BooleanField(widget=forms.CheckboxInput(attrs={'onclick' : 'submit();'}), required=False, label="verifiziert")
 
 
-class GeoLocationAutocomplete(autocomplete_light.AutocompleteModelBase):
-    search_fields = ['^name', '^type']
-    model = models.GeoLocation
+class GeoLocationAutocomplete(autocomplete_light.AutocompleteListTemplate):
+    reg = models.Region.objects.all().filter(abbreviation='GR')
+    choices =  [geoname.get_display_name() for geoname in models.GeoLocation.objects.all().filter(region=reg)]
+
 autocomplete_light.register(GeoLocationAutocomplete)
 
-class OsAutocomplete(autocomplete_light.AutocompleteListTemplate):
-    choices =  [geoname.name + ' ' + geoname.type for geoname in models.GeoLocation.objects.all()]
 
+autocomplete_light.register(GeoLocationAutocomplete)
 
-
-autocomplete_light.register(OsAutocomplete)
-
-class OsAutocompleteForm(forms.Form):
-    os = autocomplete_light.ChoiceField('OsAutocomplete')
+class GeoLocationForm(forms.Form):
+    geolocation = autocomplete_light.ChoiceField('GeoLocationAutocomplete')
+    not_in_db = forms.BooleanField(label='GeoLocation nicht in Datenbank vorhanden', required=False)
+    ambiguous = forms.BooleanField(label='Geolaction in Datenbank vorhanden, zweideutig', required=False)
+    user_notes = forms.CharField(label='Anmerkungen/ Hinweise', required=False, max_length=500)

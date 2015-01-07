@@ -21,7 +21,11 @@
     {% endfor %}
 
 <p class="context_lookup" >
-   {{ test_form.as_p }}
+  <form method="post">
+    {{ test_form.as_p }}
+        {% csrf_token %}
+    <input type="submit" value="Speichern">
+</form>
 </p>
 </body>
 </html>
