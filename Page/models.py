@@ -94,8 +94,8 @@ class PageManager(models.Manager):
             tkns = list()
             before = str()
             for tkn in div.tokens.all():
+                checked = str()
                 if tkn.id in geonames_token_ids:
-                    checked = str()
                     if geonames.all().filter(tokens = tkn)[0].validation_state == 'verif':
                         checked = 'checked='
                     tkns.append(('gn', geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before), checked))
@@ -108,7 +108,7 @@ class PageManager(models.Manager):
                         checked = 'checked='
                     tkns.append(('ambg', unclear_geonames.all().filter(tokens = tkn)[0].id, tkn.spaced_token(before), checked))
                 else:
-                    tkns.append(('token', tkn.id, tkn.spaced_token(before)))
+                    tkns.append(('token', tkn.id, tkn.spaced_token(before), checked))
                 before = tkn.content
             divs.append(tkns)
         return divs
@@ -151,7 +151,7 @@ class PageManager(models.Manager):
         '''Processes a verification request from on mouseover pop-up box.'''
         if geoname.startswith('ambg_') or geoname.startswith('unkn_'):
             geoname_unclear_id = geoname.split('_')[1]
-            geoname_unclear_object = GeoNameUnclear.objects.get(geoname_unclear_id)
+            geoname_unclear_object = GeoNameUnclear.objects.get(id=geoname_unclear_id)
             geoname_unclear_object.validation_state = 'verif'
             geoname_unclear_object.save()
         if geoname.startswith('gn_'):

@@ -10,13 +10,12 @@ import time
 def main(request, yrb, facs_no):
     pageManager = Page.models.PageManager(yrb, facs_no)
     #Handling single geoname validation (via pop-up box)
+    print (request.POST)
     for item in  request.POST.items():
         if (item[0].startswith('unkn_') or item[0].startswith('ambg_') or item[0].startswith('gn_')) and item[1] == 'verify':
             pageManager.process_single_verification(item[0])
     pg = pageManager.page
-    #mark as correct form
-    markAsCorrectForm = MarkAsCorrectForm(request.POST or None, initial={'correct' : pg.correct})#to set initial value at runtime
-    box_checked = None
+
     #displaying geonames_list
     geonames = pageManager.get_geonames()
     #processing geonamelist changes
@@ -31,6 +30,7 @@ def main(request, yrb, facs_no):
         time.sleep(1) #to give enough time for the server to process data
     #mark as correct form
     markAsCorrectForm = MarkAsCorrectForm(request.POST or None, initial={'correct' : pg.correct})#to set initial value at runtime
+    #mark as correct form
     box_checked = None
     if markAsCorrectForm.is_valid():
         box_checked = markAsCorrectForm.cleaned_data['correct']
@@ -64,5 +64,6 @@ def new_geoName(request):
                context_ids =  [int(token_id.split('_')[1]) for token_id in entry[1]]
     newGeoNameManager = Page.models.NewGeoNameManager(context_ids)
     context =  newGeoNameManager.get_context()
+    geoLocationForm = GeoLocationForm()
     print (request.POST)
-    return render(request, 'Page/templates/new_geoname.html', {'context_ids' : context_ids, 'context' : context, 'test_form' : GeoLocationForm()}, context_instance=RequestContext(request))
+    return render(request, 'Page/templates/new_geoname.html', {'context_ids' : context_ids, 'context' : context, 'geolocation_form' : geoLocationForm}, context_instance=RequestContext(request))

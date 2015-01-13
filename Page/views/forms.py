@@ -12,15 +12,19 @@ class VerifyGeoNameForm(forms.Form):
     verified = forms.BooleanField(widget=forms.CheckboxInput(attrs={'onclick' : 'submit();'}), required=False, label="verifiziert")
 
 
-class GeoLocationAutocomplete(autocomplete_light.AutocompleteListTemplate):
-    reg = models.Region.objects.all().filter(abbreviation='GR')
+class GeoLocationAutocomplete(autocomplete_light.AutocompleteModelBase):
+    choices =  models.GeoLocation.objects.all()
+    ''''
+    def choices_for_request(self):
+        reg = models.Region.objects.all().filter(abbreviation='GR')
+        choices = self.choices.filter(region=reg)
+        return choices
 
-    choices =  [geoname.get_display_name() for geoname in models.GeoLocation.objects.all().filter(region=reg)]
+    '''
+
 
 autocomplete_light.register(GeoLocationAutocomplete)
 
-
-autocomplete_light.register(GeoLocationAutocomplete)
 
 class GeoLocationForm(forms.Form):
     geolocation = autocomplete_light.ChoiceField('GeoLocationAutocomplete')
