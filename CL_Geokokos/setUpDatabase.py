@@ -6,7 +6,7 @@ from xml.etree import cElementTree as ET
 import mysql.connector
 import sys
 
-geokokos_db = local_setting = mysql.connector.connect(host="localhost",user="root", passwd="", db ="geokokos_db")
+geokokos_db = local_setting = mysql.connector.connect(host="localhost",user="root", passwd="", db ="geokokos_db_test")
 
 def _get_place_name_from_zip(zip_code, zip_code_file='information_sources/plz_l_20141117.txt'):
     '''
@@ -269,7 +269,7 @@ def import_geonames(file_name, yearbook):
 
 def import_country_codes(file_name):
     abbr_country_name_pairs = list()
-    with open(file_name, 'r') as f:
+    with open(file_name, 'r', encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             abbr = line[:2]
@@ -538,12 +538,12 @@ def import_swisstopo_data(file_name):
     swisstopo_cursor.close()
 
 
-#import_country_codes('/Users/lukasmeier/Programming/Facharbeit/CL_Geokokos/CL_Geokokos/information_sources/country.csv')
-#fill_in_swiss_cantons()
+import_country_codes('/Users/lukasmeier/Programming/Facharbeit/CL_Geokokos/CL_Geokokos/information_sources/country.csv')
+fill_in_swiss_cantons()
 #import_swisstopo_data('/Users/lukasmeier/Programming/Facharbeit/geokokos_daten/swisstopo/geolocations.sql')
-#import_geoname_data('/Users/lukasmeier/Programming/Facharbeit/geokokos_daten/geonames/geonames.sql')
+import_geoname_data('/Users/lukasmeier/Programming/Facharbeit/geokokos_daten/geonames/geonames.sql')
 
 #import_corpus('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de.xml')
 
-import_geonames('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de-ner.xml', 'SAC-Jahrbuch_1969_de.xml')
+#import_geonames('/Users/lukasmeier/Programming/Facharbeit/Text+Berg/Text+Berg_Release_149_v01/XML/SAC/SAC-Jahrbuch_1969_de-ner.xml', 'SAC-Jahrbuch_1969_de.xml')
 
